@@ -1,0 +1,74 @@
+# Supported Minecraft versions. Adding a version = new adapter + entry here.
+# java/renderer values are initial assumptions; launcher reads real javaVersion from Mojang's version JSON.
+
+[[version]]
+mc = "1.7.10"
+adapter = "v1_7_10"
+java = 8
+loader = "launchwrapper"
+renderer = "gl"
+mappings = "mcp"
+tier = 2
+
+[[version]]
+mc = "1.8.9"
+adapter = "v1_8_9"
+java = 8
+loader = "launchwrapper"
+renderer = "gl"
+mappings = "mcp"
+tier = 1
+
+[[version]]
+mc = "1.12.2"
+adapter = "v1_12_2"
+java = 8
+loader = "launchwrapper"
+renderer = "gl"
+mappings = "mcp"
+tier = 2
+
+[[version]]
+mc = "1.21.11"
+adapter = "v1_21_11"
+java = 21
+loader = "fabric"
+renderer = "gl"
+mappings = "mojmap"
+tier = 1
+
+[[version]]
+mc = "26.1"
+adapter = "v26_x"
+java = 25   # verify against manifest
+loader = "fabric"
+renderer = "vulkan"   # Blaze3D; verify in render spike
+mappings = "mojmap"
+tier = 1
+
+[[version]]
+mc = "26.2"
+adapter = "v26_x"
+java = 25
+loader = "fabric"
+renderer = "vulkan"
+mappings = "mojmap"
+tier = 2
+
+[[version]]
+mc = "26.2.1"   # NOT in Mojang manifest as of 2026-09-29; confirm the intended version id
+adapter = "v26_x"
+java = 25
+loader = "fabric"
+renderer = "vulkan"
+mappings = "mojmap"
+tier = 2
+
+[[version]]
+mc = "26.3"
+adapter = "v26_x"
+java = 25
+loader = "fabric"
+renderer = "vulkan"
+mappings = "mojmap"
+tier = 1

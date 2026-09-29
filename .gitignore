@@ -1,0 +1,12 @@
+target/
+node_modules/
+dist/
+.playwright-mcp/
+launcher/src-tauri/gen/
+launcher/ui/src/tokens.css
+*.part
+.env
+aether.config.json
+runtime/build/
+runtime/.gradle/
+runtime/*/build/
