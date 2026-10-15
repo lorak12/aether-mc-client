@@ -26,6 +26,13 @@ abstract class MinecraftClientMixin {
         if (AetherClient.replaceTitleScreen(screen)) ci.cancel();
     }
 
+    /** FPS limiter / dynamic FPS. */
+    @Inject(method = "getMaxFramerate", at = @At("RETURN"), cancellable = true)
+    private void aether$framerate(org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Integer> cir) {
+        int limited = gg.aether.mc.LegacyRender.framerate(cir.getReturnValueI());
+        if (limited != cir.getReturnValueI()) cir.setReturnValue(limited);
+    }
+
     @Inject(method = "stop", at = @At("HEAD"))
     private void aether$stop(CallbackInfo ci) { AetherClient.save(); }
 

@@ -34,6 +34,12 @@ public final class Gfx {
     public static void enableRescaleNormal() { GlStateManager.enableRescaleNormal(); }
     public static void disableRescaleNormal() { GlStateManager.disableRescaleNormal(); }
     public static void enableColorMaterial() { GlStateManager.enableColorMaterial(); }
+    public static void enableCull() { GlStateManager.enableCull(); }
+    public static void disableCull() { GlStateManager.disableCull(); }
+    public static void enableLighting() { GlStateManager.enableLighting(); }
+    public static void disableLighting() { GlStateManager.disableLighting(); }
+    public static void depthMask(boolean on) { GlStateManager.depthMask(on); }
+    public static void blendFunc(int src, int dst) { GlStateManager.blendFunc(src, dst); }
     public static void blendFuncSeparate(int srcRgb, int dstRgb, int srcAlpha, int dstAlpha) { GlStateManager.blendFuncSeparate(srcRgb, dstRgb, srcAlpha, dstAlpha); }
     public static void shadeModel(int mode) { GlStateManager.shadeModel(mode); }
     public static void color(float r, float g, float b, float a) { GlStateManager.color(r, g, b, a); }
@@ -60,6 +66,12 @@ public final class Gfx {
     public static void enableRescaleNormal() { GL11.glEnable(GL12.GL_RESCALE_NORMAL); }
     public static void disableRescaleNormal() { GL11.glDisable(GL12.GL_RESCALE_NORMAL); }
     public static void enableColorMaterial() { GL11.glEnable(GL11.GL_COLOR_MATERIAL); }
+    public static void enableCull() { GL11.glEnable(GL11.GL_CULL_FACE); }
+    public static void disableCull() { GL11.glDisable(GL11.GL_CULL_FACE); }
+    public static void enableLighting() { GL11.glEnable(GL11.GL_LIGHTING); }
+    public static void disableLighting() { GL11.glDisable(GL11.GL_LIGHTING); }
+    public static void depthMask(boolean on) { GL11.glDepthMask(on); }
+    public static void blendFunc(int src, int dst) { GL11.glBlendFunc(src, dst); }
     public static void blendFuncSeparate(int srcRgb, int dstRgb, int srcAlpha, int dstAlpha) { GL14.glBlendFuncSeparate(srcRgb, dstRgb, srcAlpha, dstAlpha); }
     public static void shadeModel(int mode) { GL11.glShadeModel(mode); }
     public static void color(float r, float g, float b, float a) { GL11.glColor4f(r, g, b, a); }
@@ -74,6 +86,11 @@ public final class Gfx {
         GL13.glActiveTexture(GL13.GL_TEXTURE0);
     }
 //#endif
+
+    /** Lightmap coordinates (block light, sky light) as packed by Entity.getLightmapCoordinates, for the next vertices. */
+    public static void lightmap(int packed) {
+        GL13.glMultiTexCoord2f(GL13.GL_TEXTURE1, packed % 65536, packed / 65536);
+    }
 
     // ---- quads ------------------------------------------------------------------------------------------------------
 
@@ -96,6 +113,17 @@ public final class Gfx {
     }
 
     public static void draw() { tess.draw(); }
+
+    /** Start a batch of lit, textured quads (pos, uv, white, normal) for entity-space geometry. */
+    public static void beginModel() {
+        tess = Tessellator.getInstance();
+        buf = tess.getBuffer();
+        buf.begin(GL11.GL_QUADS, VertexFormats.POSITION_TEXTURE_COLOR_NORMAL);
+    }
+
+    public static void modelVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) {
+        buf.vertex(x, y, z).texture(u, v).color(255, 255, 255, 255).normal(nx, ny, nz).next();
+    }
 //#else
     private static Tessellator tess;
 
@@ -112,5 +140,17 @@ public final class Gfx {
     }
 
     public static void draw() { tess.end(); }
+
+    public static void beginModel() {
+        tess = Tessellator.INSTANCE;
+        tess.begin(GL11.GL_QUADS);
+    }
+
+    public static void modelVertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) {
+        tess.color(255, 255, 255, 255);
+        tess.normal(nx, ny, nz);
+        tess.texture(u, v);
+        tess.vertex(x, y, z);
+    }
 //#endif
 }

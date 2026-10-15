@@ -151,6 +151,23 @@ public final class GuiRenderer implements UiRenderer {
         Gfx.disableBlend();
     }
 
+    @Override public boolean cosmeticIcon(gg.aether.core.cosmetics.Cosmetic c, float x, float y, float w, float h) {
+        gg.aether.mc.LegacyCosmetics.Icon ic = gg.aether.mc.LegacyCosmetics.icon(c);
+        if (ic == null || ic.w <= 0 || ic.h <= 0 || !McTextures.bind(ic.id)) return false;
+        float s = Math.min(w / ic.w, h / ic.h);
+        int dw = Math.round(ic.w * s), dh = Math.round(ic.h * s);
+        texQuad(Math.round(x + (w - dw) / 2f), Math.round(y + (h - dh) / 2f), dw, dh,
+                (float) ic.u / ic.texW, (float) ic.v / ic.texH, (float) (ic.u + ic.w) / ic.texW, (float) (ic.v + ic.h) / ic.texH, -1);
+        return true;
+    }
+
+    /** Account faces are 8x8 pixel art: drawn as a nearest-filtered image, so every skin pixel stays a sharp square. */
+    @Override public boolean head(String playerName, String uuid, float x, float y, float size) {
+        int[] face = gg.aether.core.SkinFaces.face(uuid);
+        if (face == null || face.length != 64) return false;
+        return image("aether:face/" + uuid, 8, 8, face, System.identityHashCode(face), x, y, size, size);
+    }
+
     @Override public boolean texture(String id, float x, float y, float w, float h) {
         Identifier rid = new Identifier(id);
         if (McTextures.size(rid) == null || !McTextures.bind(rid)) return false;

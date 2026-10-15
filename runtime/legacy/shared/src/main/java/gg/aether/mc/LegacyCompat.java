@@ -233,6 +233,75 @@ public final class LegacyCompat {
 //#endif
     }
 
+    /** An elytra in the chest slot (1.9+ only). */
+    public static boolean wearsElytra(PlayerEntity p) {
+//#if >=1.12
+        return p.getStack(net.minecraft.entity.EquipmentSlot.CHEST).getItem() == net.minecraft.item.Items.ELYTRA;
+//#else
+        return false;
+//#endif
+    }
+
+    /** Vanilla's cape layer conditions: the player has a cape texture and shows the cape part. */
+    public static boolean capeVisible(net.minecraft.client.network.AbstractClientPlayerEntity p) {
+//#if >=1.8
+        return p.canRenderCapeTexture() && p.isPartVisible(net.minecraft.client.render.entity.PlayerModelPart.CAPE) && p.getSkinId() != null;
+//#else
+        return p.canRenderCapeTexture() && !p.method_4577();
+//#endif
+    }
+
+    /** The cape texture (Legacy Yarn names it getSkinId; it is the one vanilla's cape layer binds). */
+    public static net.minecraft.util.Identifier capeTexture(net.minecraft.client.network.AbstractClientPlayerEntity p) { return p.getSkinId(); }
+
+    /** The entity's packed light level for the next vertices. */
+    public static int lightmap(Entity e, float tickDelta) {
+//#if >=1.12
+        return e.getLightmapCoordinates();
+//#else
+        return e.getLightmapCoordinates(tickDelta);
+//#endif
+    }
+
+//#if <1.8
+    /** Limb swing amount (1.7.10 leaves it unnamed). */
+    public static float limbAmount(LivingEntity e, float tickDelta) { return e.field_6748 + (e.field_6749 - e.field_6748) * tickDelta; }
+//#endif
+
+    /** Whether the server's player list has {@code p} (a real player, not an NPC). */
+    public static boolean inTabList(PlayerEntity p) {
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (mc.getNetworkHandler() == null) return true;
+//#if >=1.8
+        return mc.getNetworkHandler().getPlayerListEntry(p.getUuid()) != null;
+//#else
+        for (Object o : mc.getNetworkHandler().field_7911) if (((net.minecraft.client.class_482) o).field_1679.equals(p.getGameProfile().getName())) return true;
+        return false;
+//#endif
+    }
+
+    /** A plugin message's data. */
+    public static byte[] payload(net.minecraft.network.packet.s2c.play.CustomPayloadS2CPacket packet) {
+//#if >=1.8
+        net.minecraft.util.PacketByteBuf buf = packet.getPayload();
+        byte[] out = new byte[buf.readableBytes()];
+        buf.getBytes(buf.readerIndex(), out);
+        return out;
+//#else
+        return packet.getPayload();
+//#endif
+    }
+
+    /** A plugin message to the server. */
+    public static net.minecraft.network.Packet customPayload(String channel, byte[] data) {
+//#if >=1.8
+        return new net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket(channel,
+                new net.minecraft.util.PacketByteBuf(io.netty.buffer.Unpooled.wrappedBuffer(data)));
+//#else
+        return new net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket(channel, data);
+//#endif
+    }
+
     /** Draw a string (1.7.10 takes whole pixels). */
     public static void drawText(net.minecraft.client.font.TextRenderer font, String s, float x, float y, int argb, boolean shadow) {
 //#if >=1.8

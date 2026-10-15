@@ -1,26 +1,40 @@
 package gg.aether.client.mixin;
 
-import gg.aether.client.AetherClient;
+import gg.aether.mc.LegacyRender;
 import net.minecraft.client.render.entity.EntityRenderer;
+import net.minecraft.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** Screenshot mode: no nametags. */
+/**
+ * Nametags: every label (players, mobs, item frames) is drawn through renderLabelIfPresent, so hiding them (screenshot
+ * mode, distance limit, NPC filter), the client badge, the health suffix and streamer name replacement all hook there.
+ */
 @Mixin(EntityRenderer.class)
 abstract class EntityRendererMixin {
-//#if >=1.8
-    @Inject(method = "hasLabel", at = @At("RETURN"), cancellable = true)
-    private void aether$names(CallbackInfoReturnable<Boolean> cir) {
-        if (AetherClient.fx().hideNametags) cir.setReturnValue(false);
-    }
-//#else
-    // 1.7.10: every label (players, mobs, item frames) is drawn through this one method.
+    @Shadow protected abstract void renderLabelIfPresent(Entity entity, String text, double x, double y, double z, int maxDistance);
+
+    @Unique private boolean aether$busy;
+
     @Inject(method = "renderLabelIfPresent", at = @At("HEAD"), cancellable = true)
-    private void aether$names(net.minecraft.entity.Entity entity, String text, double x, double y, double z, int maxDistance,
-            org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
-        if (AetherClient.fx().hideNametags) ci.cancel();
+    private void aether$label(Entity entity, String text, double x, double y, double z, int maxDistance, CallbackInfo ci) {
+        if (aether$busy) return;
+        String shown = LegacyRender.nameTag(entity, text);
+        if (shown == null) {
+            ci.cancel();
+            return;
+        }
+        if (shown.equals(text)) return;
+        ci.cancel();
+        aether$busy = true;
+        try {
+            renderLabelIfPresent(entity, shown, x, y, z, maxDistance);
+        } finally {
+            aether$busy = false;
+        }
     }
-//#endif
 }

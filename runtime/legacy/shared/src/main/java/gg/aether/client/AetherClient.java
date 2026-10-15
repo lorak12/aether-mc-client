@@ -45,7 +45,6 @@ public final class AetherClient implements ClientModInitializer {
     private static float lastHealth = -1;
     private static Object lastPlayer;
     private static int ticks;
-    private static float savedGamma = Float.NaN;
 
     public static ModManager mods() { return MM; }
     public static Overrides fx() { return MM.overrides(); }
@@ -143,20 +142,11 @@ public final class AetherClient implements ClientModInitializer {
             mc.options.perspective = savedPerspective;
             savedPerspective = -1;
         }
-        // Fullbright: legacy lightmaps read the gamma option field directly; restore the player's value afterwards.
-        if (fx.gamma != null) {
-            if (Float.isNaN(savedGamma)) savedGamma = mc.options.gamma;
-            mc.options.gamma = fx.gamma.floatValue();
-        } else if (!Float.isNaN(savedGamma)) {
-            mc.options.gamma = savedGamma;
-            savedGamma = Float.NaN;
-        }
+        // Vanilla option overrides (including Fullbright's gamma) go into the option fields; LegacyRender puts them back.
+        gg.aether.mc.LegacyRender.afterTick(mc, fx);
         if (fx.selectSlot != null && mc.player != null && fx.selectSlot >= 0 && fx.selectSlot <= 8) mc.player.inventory.selectedSlot = fx.selectSlot;
         if (mc.world == null && mc.currentScreen != null && McAudit.tick()) mc.scheduleStop();
     }
-
-    /** The player's real gamma while Fullbright overrides it (options.txt must never get the override). */
-    public static float realGamma(float current) { return Float.isNaN(savedGamma) ? current : savedGamma; }
 
     public static float fovMultiplier(float partialTick) {
         return prevFov + (curFov - prevFov) * Math.max(0f, Math.min(1f, partialTick));
