@@ -16,7 +16,9 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.SurvivalInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
+//#if >=1.8
 import net.minecraft.client.network.PlayerListEntry;
+//#endif
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
@@ -50,13 +52,31 @@ public final class McGameState implements GameState {
     private ClientWorld level() { return mc.world; }
 
     @Override public boolean inWorld() { return mc.player != null && mc.world != null; }
+//#if >=1.8
     @Override public int fps() { return MinecraftClient.getCurrentFps(); }
+//#else
+    @Override public int fps() {
+        String s = mc.fpsDebugString; // "61 fps, 0 chunk updates"
+        if (s == null) return 0;
+        int n = 0, i = 0;
+        while (i < s.length() && Character.isDigit(s.charAt(i))) n = n * 10 + (s.charAt(i++) - '0');
+        return n;
+    }
+//#endif
 
     @Override public int pingMs() {
         ClientPlayerEntity p = p();
         if (p == null || mc.getNetworkHandler() == null || mc.isInSingleplayer()) return -1;
+//#if >=1.8
         PlayerListEntry e = mc.getNetworkHandler().getPlayerListEntry(p.getUuid());
         return e == null ? -1 : e.getLatency();
+//#else
+        for (Object o : mc.getNetworkHandler().field_7911) {
+            net.minecraft.client.class_482 e = (net.minecraft.client.class_482) o;
+            if (e.field_1679.equals(p.getGameProfile().getName())) return e.field_1680;
+        }
+        return -1;
+//#endif
     }
 
     @Override public double x() { return p() == null ? 0 : p().x; }
@@ -107,7 +127,8 @@ public final class McGameState implements GameState {
         ClientPlayerEntity p = p();
         if (p == null) return Collections.emptyList();
         List<Effect> out = new ArrayList<Effect>();
-        for (StatusEffectInstance e : p.getStatusEffectInstances()) {
+        for (Object o : p.getStatusEffectInstances()) {
+            StatusEffectInstance e = (StatusEffectInstance) o;
             StatusEffect type = LegacyCompat.effect(e);
             String name = type == null ? "?" : net.minecraft.client.resource.language.I18n.translate(type.getTranslationKey());
             boolean good = type == null || !type.isNegative();
@@ -149,7 +170,7 @@ public final class McGameState implements GameState {
         if (now == entitiesTick && radius == entitiesRadius) return entities;
         Map<String, Integer> out = new LinkedHashMap<String, Integer>();
         double r2 = (double) radius * radius;
-        for (Entity e : level().getEntitiesIn(p, p.getBoundingBox().expand(radius, radius, radius))) {
+        for (Entity e : LegacyCompat.entitiesNear(level(), p, radius)) {
             if (!(e instanceof LivingEntity) || e.squaredDistanceTo(p) > r2) continue;
             String name = e.getName().asUnformattedString();
             Integer n = out.get(name);
@@ -164,9 +185,15 @@ public final class McGameState implements GameState {
         BlockHitResult hit = mc.result;
         ClientPlayerEntity p = p();
         ClientWorld lv = level();
+//#if >=1.8
         if (hit == null || p == null || lv == null || hit.type == BlockHitResult.Type.MISS || hit.pos == null) return Target.NONE;
         double dist = p.getCameraPosVec(1f).distanceTo(hit.pos);
         if (hit.type == BlockHitResult.Type.ENTITY && hit.entity != null) {
+//#else
+        if (hit == null || p == null || lv == null || hit.hitResult == net.minecraft.util.hit.HitResultType.MISS || hit.pos == null) return Target.NONE;
+        double dist = hit.pos.distanceTo(net.minecraft.util.math.Vec3d.of(p.x, p.y + p.getEyeHeight(), p.z));
+        if (hit.hitResult == net.minecraft.util.hit.HitResultType.ENTITY && hit.entity != null) {
+//#endif
             Entity e = hit.entity;
             Target t = new Target(Target.Kind.ENTITY, e.getName().asUnformattedString(), "minecraft:" + McItems.entityId(e), dist);
             t.x = (int) Math.floor(e.x);
@@ -178,18 +205,30 @@ public final class McGameState implements GameState {
             }
             return t;
         }
+//#if >=1.8
         BlockPos pos = hit.getBlockPos();
         if (pos == null) return Target.NONE;
-        net.minecraft.block.Block b = lv.getBlockState(pos).getBlock();
-        Target t = new Target(Target.Kind.BLOCK, b.getTranslatedName(), McItems.blockId(b), dist);
-        t.x = pos.getX();
-        t.y = pos.getY();
-        t.z = pos.getZ();
-        t.face = hit.direction == null ? "" : hit.direction.getName();
-        t.hardness = LegacyCompat.hardness(lv, pos);
+        int bx = pos.getX(), by = pos.getY(), bz = pos.getZ();
+        String face = hit.direction == null ? "" : hit.direction.getName();
         BlockPos front = hit.direction == null ? pos : pos.offset(hit.direction);
-        t.blockLight = lv.getLightAtPos(LightType.BLOCK, front);
-        t.skyLight = lv.getLightAtPos(LightType.SKY, front);
+        int fx = front.getX(), fy = front.getY(), fz = front.getZ();
+//#else
+        int bx = hit.x, by = hit.y, bz = hit.z;
+        String[] faces = { "down", "up", "north", "south", "west", "east" };
+        String face = hit.side >= 0 && hit.side < faces.length ? faces[hit.side] : "";
+        int[][] step = { { 0, -1, 0 }, { 0, 1, 0 }, { 0, 0, -1 }, { 0, 0, 1 }, { -1, 0, 0 }, { 1, 0, 0 } };
+        int s = hit.side >= 0 && hit.side < step.length ? hit.side : 1;
+        int fx = bx + step[s][0], fy = by + step[s][1], fz = bz + step[s][2];
+//#endif
+        net.minecraft.block.Block b = LegacyCompat.block(lv, bx, by, bz);
+        Target t = new Target(Target.Kind.BLOCK, b.getTranslatedName(), McItems.blockId(b), dist);
+        t.x = bx;
+        t.y = by;
+        t.z = bz;
+        t.face = face;
+        t.hardness = LegacyCompat.hardness(lv, bx, by, bz);
+        t.blockLight = LegacyCompat.light(lv, false, fx, fy, fz);
+        t.skyLight = LegacyCompat.light(lv, true, fx, fy, fz);
         return t;
     }
 
@@ -246,27 +285,27 @@ public final class McGameState implements GameState {
     @Override public float serverTps() { return McEvents.tps(); }
     @Override public int renderDistance() { return mc.options == null ? 12 : mc.options.viewDistance; }
 
-    @Override public int blockLight(int x, int y, int z) { return level() == null ? 0 : level().getLightAtPos(LightType.BLOCK, new BlockPos(x, y, z)); }
-    @Override public int skyLight(int x, int y, int z) { return level() == null ? 15 : level().getLightAtPos(LightType.SKY, new BlockPos(x, y, z)); }
+    @Override public int blockLight(int x, int y, int z) { return level() == null ? 0 : LegacyCompat.light(level(), false, x, y, z); }
+    @Override public int skyLight(int x, int y, int z) { return level() == null ? 15 : LegacyCompat.light(level(), true, x, y, z); }
 
     @Override public String blockId(int x, int y, int z) {
         ClientWorld lv = level();
         if (lv == null) return "minecraft:air";
-        return McItems.blockId(lv.getBlockState(new BlockPos(x, y, z)).getBlock());
+        return McItems.blockId(LegacyCompat.block(lv, x, y, z));
     }
 
     @Override public int topY(int x, int z) {
         ClientWorld lv = level();
         if (lv == null) return Integer.MIN_VALUE;
-        return lv.getHighestBlock(new BlockPos(x, 0, z)).getY() - 1;
+        return LegacyCompat.topY(lv, x, z);
     }
 
     @Override public int mapColor(int x, int z) {
         ClientWorld lv = level();
         if (lv == null) return -1;
-        BlockPos top = lv.getHighestBlock(new BlockPos(x, 0, z)).down();
-        if (top.getY() < 0) return 0;
-        return LegacyCompat.mapColor(lv, top);
+        int topY = LegacyCompat.topY(lv, x, z) - 1;
+        if (topY < 0) return 0;
+        return LegacyCompat.mapColor(lv, x, topY, z);
     }
 
     // ---- vanilla HUD state ------------------------------------------------------------------------------------------
@@ -274,12 +313,19 @@ public final class McGameState implements GameState {
     @Override public List<TabPlayer> tabPlayers() {
         if (mc.getNetworkHandler() == null) return Collections.emptyList();
         List<TabPlayer> out = new ArrayList<TabPlayer>();
+//#if >=1.8
         for (PlayerListEntry i : mc.getNetworkHandler().getPlayerList()) {
             String name = i.getProfile().getName();
             String display = i.getDisplayName() == null ? name : i.getDisplayName().asUnformattedString();
             out.add(new TabPlayer(name, display, i.getLatency(), LegacyCompat.gameMode(i),
                     i.getScoreboardTeam() == null ? "" : i.getScoreboardTeam().getName()));
         }
+//#else
+        for (Object o : mc.getNetworkHandler().field_7911) {
+            net.minecraft.client.class_482 i = (net.minecraft.client.class_482) o;
+            out.add(new TabPlayer(i.field_1679, i.field_1679, i.field_1680, "", ""));
+        }
+//#endif
         return out;
     }
 
@@ -293,7 +339,7 @@ public final class McGameState implements GameState {
         if (now == infoTick && radius == infoRadius) return infos;
         List<EntityInfo> out = new ArrayList<EntityInfo>();
         double r2 = radius * radius;
-        for (Entity e : lv.getEntitiesIn(p, new Box(p.x - radius, p.y - radius, p.z - radius, p.x + radius, p.y + radius, p.z + radius))) {
+        for (Entity e : LegacyCompat.entitiesNear(lv, p, radius)) {
             double d2 = e.squaredDistanceTo(p);
             if (d2 > r2) continue;
             boolean living = e instanceof LivingEntity;

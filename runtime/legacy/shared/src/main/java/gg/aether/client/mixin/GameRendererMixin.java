@@ -28,8 +28,16 @@ abstract class GameRendererMixin {
     private void aether$hand(CallbackInfo ci) { if (AetherClient.fx().hideHand) ci.cancel(); }
 
     /** Mouse look: raw movement goes to mods; freelook turns the camera instead of the player. */
+//#if >=1.8
     @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/ClientPlayerEntity;increaseTransforms(FF)V"))
+//#else
+    @Redirect(method = "renderGui", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/ControllablePlayerEntity;increaseTransforms(FF)V"))
+//#endif
+//#if >=1.8
     private void aether$turn(ClientPlayerEntity player, float yaw, float pitch) {
+//#else
+    private void aether$turn(net.minecraft.entity.player.ControllablePlayerEntity player, float yaw, float pitch) {
+//#endif
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.mouse.x != 0 || mc.mouse.y != 0) AetherClient.mods().events().post(new Events.MouseMove(mc.mouse.x, -mc.mouse.y));
         Overrides fx = AetherClient.fx();

@@ -331,8 +331,10 @@ public final class Compat {
     }
 
     public static int minY(net.minecraft.world.level.LevelReader level) {
-//#if >=1.17
+//#if >=1.21.2
         return level.getMinY();
+//#elif >=1.17
+        return level.getMinBuildHeight();
 //#else
         return 0;
 //#endif

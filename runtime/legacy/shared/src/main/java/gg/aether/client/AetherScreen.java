@@ -99,11 +99,19 @@ final class AetherScreen extends Screen {
         e.pitch = 0;
         e.headYaw = yaw;
         e.prevHeadYaw = yaw;
+//#if >=1.8
         EntityRenderDispatcher d = MinecraftClient.getInstance().getEntityRenderManager();
         d.setYaw(180f);
         d.setRenderShadows(false);
         gg.aether.mc.LegacyCompat.renderEntity(e);
         d.setRenderShadows(true);
+//#else
+        EntityRenderDispatcher d = EntityRenderDispatcher.INSTANCE;
+        float dispatcherYaw = d.yaw;
+        d.yaw = 180f;
+        gg.aether.mc.LegacyCompat.renderEntity(e);
+        d.yaw = dispatcherYaw;
+//#endif
         e.bodyYaw = body;
         e.yaw = yawWas;
         e.pitch = pitch;

@@ -10,7 +10,9 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
+//#if >=1.8
 import net.minecraft.client.network.PlayerListEntry;
+//#endif
 import net.minecraft.entity.player.PlayerEntity;
 
 /** {@link ClientHost} for the legacy adapters: clipboard, UI sounds, OS notifications and file opening. */
@@ -97,9 +99,11 @@ public final class McHost implements ClientHost {
         MinecraftClient mc = mc();
         java.util.Set<String> out = new java.util.LinkedHashSet<String>();
         if (mc.world != null) for (Object o : mc.world.playerEntities) out.add(((PlayerEntity) o).getUuid().toString());
+//#if >=1.8
         if (mc.getNetworkHandler() != null) {
             for (PlayerListEntry i : mc.getNetworkHandler().getPlayerList()) out.add(i.getProfile().getId().toString());
         }
+//#endif
         return new ArrayList<String>(out);
     }
 

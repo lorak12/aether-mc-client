@@ -86,14 +86,14 @@ public final class McTextures {
             if ("aether".equals(id.getNamespace())) {
                 try (InputStream in = McTextures.class.getResourceAsStream("/assets/aether/" + id.getPath())) {
                     if (in != null) {
-                        BufferedImage img = TextureUtil.create(in);
+                        BufferedImage img = LegacyCompat.readImage(in);
                         register(id, img);
                         size = new int[] { img.getWidth(), img.getHeight() };
                     }
                 }
             } else {
                 try (InputStream in = MinecraftClient.getInstance().getResourceManager().getResource(id).getInputStream()) {
-                    BufferedImage img = TextureUtil.create(in);
+                    BufferedImage img = LegacyCompat.readImage(in);
                     size = new int[] { img.getWidth(), img.getHeight() };
                 }
             }

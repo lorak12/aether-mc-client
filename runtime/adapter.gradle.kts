@@ -149,6 +149,8 @@ val yarnRenameTable: List<Triple<String, String, String>> = listOf(
     Triple("1.8", "mc.player", "mc.field_3805"),
     Triple("1.8", "client.player", "client.field_3805"),
     Triple("1.8", "MinecraftClient.getInstance().player", "MinecraftClient.getInstance().field_3805"),
+    Triple("1.8", "getCameraEntity()", "field_6279"),
+    Triple("1.8", "getBoundingBox()", "boundingBox"),
 )
 val renames: List<Pair<Regex, String>> = (if (mojangNames) renameTable else yarnRenameTable).filter { compareVersions(mc, it.first) < 0 }.map {
     val from = it.second

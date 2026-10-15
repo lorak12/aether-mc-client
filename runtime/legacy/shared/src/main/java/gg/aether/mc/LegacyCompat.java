@@ -56,8 +56,10 @@ public final class LegacyCompat {
     public static String biome(World w, Entity e) {
 //#if >=1.12
         return w.getBiome(new net.minecraft.util.math.BlockPos(e)).getName();
-//#else
+//#elif >=1.8
         return w.getBiome(new net.minecraft.util.math.BlockPos(e)).name;
+//#else
+        return w.getBiome((int) Math.floor(e.x), (int) Math.floor(e.z)).name;
 //#endif
     }
 
@@ -65,8 +67,10 @@ public final class LegacyCompat {
     public static int dimension(World w) {
 //#if >=1.12
         return w.dimension.getDimensionType().getId();
-//#else
+//#elif >=1.8
         return w.dimension.getType();
+//#else
+        return w.dimension.dimensionType;
 //#endif
     }
 
@@ -81,11 +85,15 @@ public final class LegacyCompat {
     public static String gameMode(MinecraftClient mc) {
 //#if >=1.12
         return mc.interactionManager.method_9667().getGameModeName();
-//#else
+//#elif >=1.8
         return mc.interactionManager.getCurrentGameMode().getName();
+//#else
+        net.minecraft.entity.player.PlayerAbilities a = mc.field_3805.abilities;
+        return a.creativeMode ? "creative" : a.allowModifyWorld ? "survival" : "adventure";
 //#endif
     }
 
+//#if >=1.8
     /** A player list entry's game mode name, "" when unknown. */
     public static String gameMode(net.minecraft.client.network.PlayerListEntry e) {
         if (e.getGameMode() == null) return "";
@@ -95,6 +103,7 @@ public final class LegacyCompat {
         return e.getGameMode().getName();
 //#endif
     }
+//#endif
 
     /** Ticks the player has been using (drawing, eating) the held item, 0 when not using. */
     public static int useTicks(PlayerEntity p) {
@@ -105,20 +114,67 @@ public final class LegacyCompat {
 //#endif
     }
 
-    public static float hardness(World w, net.minecraft.util.math.BlockPos pos) {
+    public static float hardness(World w, int x, int y, int z) {
 //#if >=1.12
+        net.minecraft.util.math.BlockPos pos = new net.minecraft.util.math.BlockPos(x, y, z);
         return w.getBlockState(pos).getHardness(w, pos);
-//#else
+//#elif >=1.8
+        net.minecraft.util.math.BlockPos pos = new net.minecraft.util.math.BlockPos(x, y, z);
         return w.getBlockState(pos).getBlock().getStrength(w, pos);
+//#else
+        return w.getBlock(x, y, z).getHardness(w, x, y, z);
 //#endif
     }
 
-    public static int mapColor(World w, net.minecraft.util.math.BlockPos pos) {
+    public static int mapColor(World w, int x, int y, int z) {
 //#if >=1.12
+        net.minecraft.util.math.BlockPos pos = new net.minecraft.util.math.BlockPos(x, y, z);
         return w.getBlockState(pos).getMaterialColor(w, pos).color;
-//#else
+//#elif >=1.8
+        net.minecraft.util.math.BlockPos pos = new net.minecraft.util.math.BlockPos(x, y, z);
         return w.getBlockState(pos).getBlock().getMaterialColor(w.getBlockState(pos)).color;
+//#else
+        return w.getBlock(x, y, z).getMapColor(w.getBlockData(x, y, z)).color;
 //#endif
+    }
+
+    /** Registry id of the block at (x, y, z). */
+    public static net.minecraft.block.Block block(World w, int x, int y, int z) {
+//#if >=1.8
+        return w.getBlockState(new net.minecraft.util.math.BlockPos(x, y, z)).getBlock();
+//#else
+        return w.getBlock(x, y, z);
+//#endif
+    }
+
+    /** Block light / sky light at (x, y, z). */
+    public static int light(World w, boolean sky, int x, int y, int z) {
+//#if >=1.8
+        return w.getLightAtPos(sky ? net.minecraft.world.LightType.SKY : net.minecraft.world.LightType.BLOCK, new net.minecraft.util.math.BlockPos(x, y, z));
+//#else
+        return w.method_3642(sky ? net.minecraft.world.LightType.SKY : net.minecraft.world.LightType.BLOCK, x, y, z);
+//#endif
+    }
+
+    /** Y of the highest solid block in the column. */
+    public static int topY(World w, int x, int z) {
+//#if >=1.8
+        return w.getHighestBlock(new net.minecraft.util.math.BlockPos(x, 0, z)).getY() - 1;
+//#else
+        return w.getHighestBlockY(x, z) - 1;
+//#endif
+    }
+
+    /** Entities other than {@code self} within {@code radius} blocks (box test, like vanilla's lookups). */
+    public static java.util.List<Entity> entitiesNear(World w, Entity self, double radius) {
+        java.util.List<Entity> out = new java.util.ArrayList<Entity>();
+//#if >=1.8
+        net.minecraft.util.math.Box box = self.getBoundingBox().expand(radius, radius, radius);
+//#else
+        net.minecraft.util.math.Box box = self.boundingBox.expand(radius, radius, radius);
+//#endif
+        for (Object o : w.getEntitiesIn(self, box)) out.add((Entity) o);
+        return out;
     }
 
     public static boolean riding(Entity e) {
@@ -130,7 +186,7 @@ public final class LegacyCompat {
     }
 
     public static void stopMusic(MinecraftClient mc) {
-//#if <1.12
+//#if >=1.8 && <1.12
         mc.getMusicTracker().stop();
 //#endif
     }
@@ -139,16 +195,41 @@ public final class LegacyCompat {
     public static void renderGuiItem(MinecraftClient mc, ItemStack st, int x, int y) {
 //#if >=1.12
         mc.getItemRenderer().method_12461(st, x, y);
-//#else
+//#elif >=1.8
         mc.getItemRenderer().renderInGuiWithOverrides(st, x, y);
+//#else
+        GUI_ITEMS.method_6920(mc.textRenderer, mc.getTextureManager(), st, x, y);
 //#endif
     }
+
+//#if <1.8
+    private static final net.minecraft.client.render.item.ItemRenderer GUI_ITEMS = new net.minecraft.client.render.item.ItemRenderer();
+//#endif
 
     public static void renderEntity(LivingEntity e) {
 //#if >=1.12
         MinecraftClient.getInstance().getEntityRenderManager().method_12446(e, 0.0, 0.0, 0.0, 0f, 1f, false);
-//#else
+//#elif >=1.8
         MinecraftClient.getInstance().getEntityRenderManager().render(e, 0.0, 0.0, 0.0, 0f, 1f);
+//#else
+        net.minecraft.client.render.entity.EntityRenderDispatcher.INSTANCE.render(e, 0.0, 0.0, 0.0, 0f, 1f);
+//#endif
+    }
+
+    /** The dispatcher's view yaw / shadows around a GUI entity render. */
+    public static float dispatcherYaw() {
+//#if >=1.8
+        return 0f;
+//#else
+        return net.minecraft.client.render.entity.EntityRenderDispatcher.INSTANCE.yaw;
+//#endif
+    }
+
+    public static java.awt.image.BufferedImage readImage(java.io.InputStream in) throws java.io.IOException {
+//#if >=1.8
+        return net.minecraft.client.texture.TextureUtil.create(in);
+//#else
+        return javax.imageio.ImageIO.read(in);
 //#endif
     }
 

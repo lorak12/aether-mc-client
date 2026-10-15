@@ -41,8 +41,14 @@ pub const SUPPORTED: &[(&str, &str)] = &[
     ("1.20", "v1_20"),
     ("1.19.4", "v1_19_4"),
     ("1.19.3", "v1_19_3"),
+    ("1.19.2", "v1_19_2"),
+    ("1.19", "v1_19"),
+    ("1.18.2", "v1_18_2"),
+    ("1.17.1", "v1_17_1"),
+    ("1.16.5", "v1_16_5"),
     ("1.12.2", "legacy/v1_12_2"),
     ("1.8.9", "legacy/v1_8_9"),
+    ("1.7.10", "legacy/v1_7_10"),
 ];
 
 /// Adapter folder for this profile, if the client supports it. Quilt loads Fabric mods, so it gets the Fabric
@@ -184,8 +190,11 @@ mod tests {
         // Versions without an adapter (1.21.2 was replaced by 1.21.3 within days).
         assert_eq!(adapter_for("1.21.9", Loader::Fabric), Some("v1_21_9"));
         assert_eq!(adapter_for("1.21.2", Loader::Fabric), None);
-        assert_eq!(adapter_for("1.17.1", Loader::Fabric), None);
-        for version in ["1.7.10", "1.16.5", "1.18.2"] {
+        assert_eq!(adapter_for("1.17.1", Loader::Fabric), Some("v1_17_1"));
+        assert_eq!(adapter_for("1.16.5", Loader::Fabric), Some("v1_16_5"));
+        assert_eq!(adapter_for("1.7.10", Loader::Fabric), Some("legacy/v1_7_10"));
+        assert_eq!(adapter_for("1.7.2", Loader::Fabric), None);
+        for version in ["1.7.2", "1.9.4", "1.14.4", "1.15.2", "1.18.1"] {
             assert_eq!(adapter_for(version, Loader::Fabric), None);
         }
     }

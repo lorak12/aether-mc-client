@@ -18,19 +18,31 @@ public final class McItems {
     /** Item for a registry id ("minecraft:diamond_sword"), null if unknown. */
     public static Item item(String id) {
         try {
+//#if >=1.8
             return Item.REGISTRY.get(new Identifier(id));
+//#else
+            return (Item) Item.REGISTRY.get(id);
+//#endif
         } catch (RuntimeException e) {
             return null;
         }
     }
 
     public static String id(ItemStack st) {
+//#if >=1.8
         Object id = st == null || st.getItem() == null ? null : Item.REGISTRY.getIdentifier(st.getItem());
+//#else
+        Object id = st == null || st.getItem() == null ? null : Item.REGISTRY.getId(st.getItem());
+//#endif
         return id == null ? "minecraft:air" : id.toString();
     }
 
     public static String blockId(Block b) {
+//#if >=1.8
         Object id = Block.REGISTRY.getIdentifier(b);
+//#else
+        Object id = Block.REGISTRY.getId(b);
+//#endif
         return id == null ? "minecraft:air" : id.toString();
     }
 

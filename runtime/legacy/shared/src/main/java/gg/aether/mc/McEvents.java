@@ -68,8 +68,7 @@ public final class McEvents {
 
     private static void trackDamage(ClientWorld level, ClientPlayerEntity p, long now) {
         Map<Integer, Float> seen = new HashMap<Integer, Float>();
-        Box box = p.getBoundingBox().expand(DAMAGE_RADIUS, DAMAGE_RADIUS, DAMAGE_RADIUS);
-        for (Entity e : level.getEntitiesIn(p, box)) {
+        for (Entity e : LegacyCompat.entitiesNear(level, p, DAMAGE_RADIUS)) {
             if (!(e instanceof LivingEntity)) continue;
             float hp = ((LivingEntity) e).getHealth();
             seen.put(e.getEntityId(), hp);

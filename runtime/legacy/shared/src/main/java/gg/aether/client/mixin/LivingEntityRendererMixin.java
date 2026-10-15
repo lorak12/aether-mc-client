@@ -1,3 +1,4 @@
+//#if >=1.8
 package gg.aether.client.mixin;
 
 import gg.aether.client.AetherClient;
@@ -15,3 +16,4 @@ abstract class LivingEntityRendererMixin {
         if (AetherClient.fx().hideNametags) cir.setReturnValue(false);
     }
 }
+//#endif
