@@ -20,26 +20,42 @@ async fn target_versions_parse() {
 }
 
 /// Full install + start of a real game with a placeholder session (no multiplayer), killed after 25s.
-/// Set AETHER_TEST_ROOT to reuse a cache (e.g. the launcher's app data folder), AETHER_TEST_PROFILES=1.21.11:fabric,1.8.9:vanilla.
+/// Set AETHER_TEST_ROOT to reuse a cache (e.g. the launcher's app data folder), AETHER_TEST_PROFILES=1.21.11:fabric,1.8.9:vanilla,
+/// AETHER_TEST_EXTRA_MODS to add a folder of mod jars.
 #[tokio::test]
 #[ignore]
 async fn prepare_and_boot() {
     use aether_core::download::Layout;
-    use aether_core::launch::{prepare, Session};
+    use aether_core::launch::{prepare, LaunchRequest, Session};
+    use aether_core::settings::GameSettings;
     use aether_core::profile::{Loader, ProfileStore};
 
     let root = std::env::var("AETHER_TEST_ROOT").map(std::path::PathBuf::from).unwrap_or_else(|_| std::env::temp_dir().join("aether-live"));
+    // A loader version can be pinned: 1.20.1:forge:47.3.0
     let wanted = std::env::var("AETHER_TEST_PROFILES").unwrap_or_else(|_| "1.21.11:fabric".into());
     let client = reqwest::Client::new();
     let games = std::env::temp_dir().join("aether-live-games");
     let store = ProfileStore::new(&games);
     for spec in wanted.split(',') {
-        let (mc, loader) = spec.split_once(':').unwrap();
+        let parts: Vec<&str> = spec.split(':').collect();
+        let (mc, loader) = (parts[0], parts[1]);
         let loader: Loader = serde_json::from_value(serde_json::Value::String(loader.into())).unwrap();
-        let profile = store.create(&format!("live {mc}"), mc, loader).unwrap();
+        let mut profile = store.create(&format!("live {mc}"), mc, loader).unwrap();
+        profile.loader_version = parts.get(2).map(|v| v.to_string());
+        let client_jar = aether_core::runtime::prepare_profile(&root, &profile, &store.dir(&profile.id)).unwrap();
+        println!("{spec}: aether client = {client_jar:?}");
+        // AETHER_TEST_EXTRA_MODS=<folder>: also load these jars, to check compatibility with a real mod set.
+        if let Ok(extra) = std::env::var("AETHER_TEST_EXTRA_MODS") {
+            for f in std::fs::read_dir(extra).unwrap().flatten() {
+                if f.path().extension().is_some_and(|e| e == "jar") {
+                    std::fs::copy(f.path(), store.dir(&profile.id).join("mods").join(f.file_name())).unwrap();
+                }
+            }
+        }
         let session = Session { username: "AetherTest".into(), uuid: "00000000000000000000000000000000".into(), access_token: "0".into() };
         let mut last = String::new();
-        let argv = prepare(&client, &Layout::new(&root), &profile, store.dir(&profile.id), session, |s, d, t| {
+        let req = LaunchRequest { game_dir: store.dir(&profile.id), session, settings: GameSettings::default(), extra_jvm: vec![], quick_play: None };
+        let argv = prepare(&client, &Layout::new(&root), &profile, req, |s, d, t| {
             if s != last || d == t {
                 println!("{spec}: {s} {d}/{t}");
                 last = s.to_string();
@@ -64,6 +80,9 @@ async fn prepare_and_boot() {
         let tail: Vec<&str> = out.lines().rev().take(25).collect::<Vec<_>>().into_iter().rev().collect();
         println!("{spec}: alive after 25s = {alive}\n{}", tail.join("\n"));
         assert!(alive, "{spec} exited early");
+        if client_jar.is_some() {
+            assert!(out.contains("Aether loaded"), "{spec}: Aether client did not load");
+        }
     }
     let _ = std::fs::remove_dir_all(&games);
 }

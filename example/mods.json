@@ -1,0 +1,655 @@
+{
+  "version": 34,
+  "ONE_SEVEN_VISUALS": {
+    "seen": true,
+    "lastModified": 1791400956034,
+    "panelIndex": 1,
+    "ONE_SEVEN_ITEMS_LEGACY": { "enabled": true },
+    "ONE_SEVEN_ANIMATIONS_LEGACY": { "enabled": true }
+  },
+  "FPS": {
+    "enabled": true,
+    "options": {
+      "backgroundColor": { "value": 0 },
+      "textColor": { "value": -609847 }
+    },
+    "x": -168.5,
+    "y": -32.5,
+    "position": "bottomCenterLeft",
+    "seen": true,
+    "panelIndex": 2
+  },
+  "CPS": {
+    "enabled": true,
+    "options": {
+      "scale": 1.13,
+      "rightClick": true,
+      "showCPSText": false,
+      "backgroundColor": { "value": 0 },
+      "textColor": { "value": -609847 }
+    },
+    "x": -0.39997578,
+    "y": 74.58,
+    "position": "topLeft",
+    "seen": true,
+    "lastModified": 1791401845727,
+    "panelIndex": 3
+  },
+  "VIEW_ANGLES": { "panelIndex": 4 },
+  "TOGGLE_SNEAK": {
+    "options": { "flyBoost": false },
+    "seen": true,
+    "lastModified": 1762543609509,
+    "panelIndex": 5,
+    "TOGGLE_SNEAK_HUD_CHILD": {
+      "options": {
+        "bracketColor": { "value": -609847 },
+        "textColor": { "value": -413239 }
+      },
+      "position": "bottomLeft"
+    }
+  },
+  "ZOOM": {
+    "options": {
+      "smoothCamera": false,
+      "smoothZoom": false,
+      "variableZoom": true
+    },
+    "seen": true,
+    "panelIndex": 6
+  },
+  "HYPIXEL_MOD": {
+    "options": {
+      "removeGuildOnTab": false,
+      "autoTip": true,
+      "autoGG": true,
+      "autoGGMessage": "gg :3",
+      "levelHead": true,
+      "levelAbove": true,
+      "removeLobbyStatuses": true,
+      "hideSoulWellAnnouncements": true,
+      "hideMysteryBoxAnnouncements": true
+    },
+    "seen": true,
+    "lastModified": 1791401848368,
+    "panelIndex": 7
+  },
+  "HYPIXEL_BEDWARS": {
+    "seen": true,
+    "lastModified": 1791401852244,
+    "panelIndex": 8,
+    "HYPIXEL_BEDWARS_STATS_CHILD": {
+      "options": {
+        "background": false,
+        "sessionGames": false,
+        "gameTime": false,
+        "finalsRatio": false,
+        "bedsRatio": false,
+        "killsRatio": false,
+        "winsRatio": false
+      },
+      "x": 0.5,
+      "position": "topRight"
+    },
+    "HYPIXEL_BEDWARS_RESOURCE_COUNTER_CHILD": {
+      "options": {
+        "background": false,
+        "useResourceIcons": true,
+        "showResourcesInEnderchest": true
+      },
+      "x": 0.5,
+      "y": -129.0,
+      "position": "bottomRight"
+    },
+    "HYPIXEL_BEDWARS_UPGRADE_DISPLAY_CHILD": {
+      "enabled": false,
+      "x": 0.5,
+      "y": 126.0,
+      "position": "topRight",
+      "excludedItems": []
+    },
+    "HYPIXEL_BEDWARS_TEAM_DISPLAY_CHILD": { "enabled": false }
+  },
+  "HEIGHT_LIMIT": {
+    "x": -204.0,
+    "y": -52.5,
+    "position": "middleRight",
+    "seen": true,
+    "lastModified": 1791401879283,
+    "panelIndex": 9
+  },
+  "QUICKPLAY": { "panelIndex": 10 },
+  "ARMORSTATUS": {
+    "options": {
+      "damageDisplay": "percent",
+      "durabilityPosition": "left",
+      "nameTextColor": { "value": -609847 },
+      "highestColor": { "value": -609847 }
+    },
+    "x": -295.5,
+    "position": "bottomRight",
+    "seen": true,
+    "panelIndex": 11,
+    "ARMORSTATUS_PROTECTION_CHILD": { "y": -90.0, "position": "bottomRight" },
+    "ARMORSTATUS_HELD_ITEM_CHILD": {
+      "enabled": false,
+      "options": { "durabilityPosition": "left" }
+    },
+    "ARMORSTATUS_HELMET_CHILD": { "options": { "durabilityPosition": "left" } },
+    "ARMORSTATUS_CHESTPLATE_CHILD": {
+      "options": { "durabilityPosition": "left" }
+    },
+    "ARMORSTATUS_LEGGINGS_CHILD": {
+      "options": { "durabilityPosition": "left" }
+    },
+    "ARMORSTATUS_BOOTS_CHILD": { "options": { "durabilityPosition": "left" } },
+    "ARMORSTATUS_OFF_HAND_HELD_ITEM_CHILD": {
+      "options": { "durabilityPosition": "left" }
+    }
+  },
+  "KEYSTROKES": {
+    "enabled": true,
+    "options": {
+      "scale": 1.13,
+      "textColor": { "value": -609847 },
+      "backgroundColor": { "value": 0 }
+    },
+    "x": -0.12999344,
+    "y": -0.12998986,
+    "position": "topLeft",
+    "seen": true,
+    "lastModified": 1791401821210,
+    "panelIndex": 12,
+    "KEYSTROKE_KEY_D": { "x": 48.0, "y": 65.0, "position": "topLeft" },
+    "KEYSTROKE_KEY_A": { "x": 10.0, "y": 65.0, "position": "topLeft" },
+    "KEYSTROKE_KEY_MOUSE2": { "x": 38.5, "y": 94.0, "position": "topLeft" },
+    "KEYSTROKE_KEY_S": { "x": 29.0, "y": 65.0, "position": "topLeft" },
+    "KEYSTROKE_KEY_W": { "x": 29.0, "y": 46.0, "position": "topLeft" },
+    "KEYSTROKE_KEY_SPACE": { "x": 10.0, "y": 84.0, "position": "topLeft" },
+    "KEYSTROKE_KEY_MOUSE1": { "x": 10.0, "y": 94.0, "position": "topLeft" }
+  },
+  "COORDINATES": {
+    "enabled": false,
+    "options": { "backgroundColor": { "chroma": true } },
+    "x": 10.0,
+    "y": 24.0,
+    "position": "topLeft",
+    "seen": true,
+    "panelIndex": 13,
+    "COORDINATES_X_CHILD": { "enabled": false },
+    "COORDINATES_Y_CHILD": { "enabled": false },
+    "COORDINATES_Z_CHILD": { "enabled": false },
+    "COORDINATES_C_CHILD": { "enabled": false },
+    "COORDINATES_DIRECTION_CHILD": { "enabled": false },
+    "COORDINATES_BIOME_CHILD": { "enabled": false }
+  },
+  "DAY_COUNTER": { "panelIndex": 14 },
+  "CROSSHAIR": {
+    "enabled": true,
+    "seen": true,
+    "panelIndex": 15,
+    "CROSSHAIR_NORMAL": {
+      "options": {
+        "crosshairMode": "crosshairModeCustom",
+        "color": { "value": -609847 },
+        "crosshairColorVanilla": false,
+        "customScale": true
+      },
+      "customCrosshair": "LCCH-11-Ay5oAEFAkigKKIAAAAAAAA\u003d\u003d"
+    },
+    "CROSSHAIR_FRIENDLY": {
+      "options": { "gridSize": "crosshairGridSmall" },
+      "customCrosshair": "LCCH-1-AA\u003d\u003d"
+    },
+    "CROSSHAIR_ENEMY": {
+      "options": { "gridSize": "crosshairGridSmall" },
+      "customCrosshair": "LCCH-1-AA\u003d\u003d"
+    },
+    "CROSSHAIR_ELYTRA": {
+      "customCrosshair": "LCCH-13-AAB/mLNQGApDYSgMhaJIFFEUBgMAAA\u003d\u003d"
+    }
+  },
+  "ATTACK_INDICATOR": { "panelIndex": 16 },
+  "POTION_EFFECTS": {
+    "options": {
+      "formattedDurations": true,
+      "textColor": { "value": -609847 },
+      "infoColor": { "value": -609847 }
+    },
+    "y": -34.0,
+    "position": "middleLeft",
+    "seen": true,
+    "panelIndex": 17
+  },
+  "DIRECTION_HUD": {
+    "enabled": false,
+    "options": { "width": 218.53, "textShadow": true },
+    "y": 17.0,
+    "position": "topCenter",
+    "seen": true,
+    "panelIndex": 18
+  },
+  "WAYPOINTS": {
+    "enabled": false,
+    "options": { "toggleWaypoints": "KEY_NONE", "addWaypoint": "KEY_NONE" },
+    "seen": true,
+    "panelIndex": 19
+  },
+  "HIT_COLOR": { "panelIndex": 20 },
+  "SCOREBOARD": {
+    "options": {
+      "scale": 1.14,
+      "numbers": true,
+      "textShadow": true,
+      "backgroundColor": { "value": 0 },
+      "headerColor": { "value": 0 }
+    },
+    "x": 0.5,
+    "y": -13.5,
+    "position": "middleRight",
+    "seen": true,
+    "panelIndex": 21
+  },
+  "TITLES": { "panelIndex": 22 },
+  "ITEM_COUNTER": { "panelIndex": 23 },
+  "POTION_COUNTER": { "panelIndex": 24 },
+  "PING": {
+    "enabled": true,
+    "options": {
+      "showPingPrefix": false,
+      "pingPrefix": "Period: ",
+      "pingPrefixColor": { "value": -413239 },
+      "dynamicPingColor": false,
+      "pingNumberColor": { "value": -609847 }
+    },
+    "seen": true,
+    "panelIndex": 25,
+    "PING_HUD": {
+      "enabled": false,
+      "options": { "scale": 1.13, "backgroundColor": { "value": 0 } },
+      "x": -8.456543,
+      "y": -20.940002,
+      "position": "bottomRight"
+    }
+  },
+  "MOTION_BLUR": { "seen": true, "panelIndex": 26 },
+  "PACK_ORGANIZER": { "panelIndex": 27 },
+  "CHAT": {
+    "options": {
+      "chatStackIgnoreBlank": true,
+      "chatStackIgnoreBreak": true,
+      "copyChat": true,
+      "chatNameColor": "DARK_PURPLE",
+      "chatBackgroundOpacity": 0.0,
+      "chatHeight": true
+    },
+    "seen": true,
+    "lastModified": 1787753570520,
+    "panelIndex": 28
+  },
+  "TAB": {
+    "options": {
+      "hideNPC": true,
+      "highlightOwnName": true,
+      "nameColor": { "value": -5635926 }
+    },
+    "seen": true,
+    "panelIndex": 29
+  },
+  "NAMETAG": { "panelIndex": 30 },
+  "SHULKER_PREVIEW": { "panelIndex": 31 },
+  "SCROLLABLE_TOOLTIPS": { "seen": true, "panelIndex": 32 },
+  "PARTICLE_CHANGER": { "panelIndex": 33 },
+  "NICK_HIDER": {
+    "options": { "ownName": "Lili", "hideOwnSkin": false },
+    "seen": true,
+    "panelIndex": 34
+  },
+  "COOLDOWNS": {
+    "enabled": false,
+    "x": -232.0,
+    "position": "bottomCenterLeft",
+    "seen": true,
+    "panelIndex": 35
+  },
+  "WORLDEDIT_CUI": { "panelIndex": 36 },
+  "CLOCK": {
+    "enabled": true,
+    "options": {
+      "scale": 1.16,
+      "militaryTime": true,
+      "backgroundColor": { "value": 0 },
+      "textColor": { "value": -609847 }
+    },
+    "x": 0.5,
+    "position": "bottomRight",
+    "seen": true,
+    "panelIndex": 37
+  },
+  "STOPWATCH": {
+    "seen": true,
+    "panelIndex": 38,
+    "MIGRATED_STOPWATCH": { "x": -10.0, "y": 30.0, "position": "topRight" },
+    "stopwatches": ["MIGRATED_STOPWATCH"]
+  },
+  "PLAYTIME": { "x": 90.0, "y": 46.0, "position": "topLeft", "panelIndex": 39 },
+  "MEMORY": {
+    "options": { "backgroundColor": { "chroma": true } },
+    "x": -10.0,
+    "y": 50.0,
+    "position": "topRight",
+    "seen": true,
+    "lastModified": 1791401859065,
+    "panelIndex": 40
+  },
+  "COMBO": {
+    "options": { "backgroundColor": { "chroma": true } },
+    "x": -10.0,
+    "y": 90.0,
+    "position": "topRight",
+    "seen": true,
+    "panelIndex": 41
+  },
+  "REACH_DISPLAY": {
+    "options": { "backgroundColor": { "chroma": true } },
+    "x": 70.0,
+    "y": 106.0,
+    "position": "topLeft",
+    "seen": true,
+    "panelIndex": 42
+  },
+  "TIME_CHANGER": {
+    "options": { "timeChangerTime": 23900 },
+    "seen": true,
+    "lastModified": 1755782060479,
+    "panelIndex": 43
+  },
+  "SERVER_ADDRESS": {
+    "options": { "backgroundColor": { "chroma": true } },
+    "x": 70.0,
+    "y": 66.0,
+    "position": "topLeft",
+    "panelIndex": 44
+  },
+  "SATURATION": {
+    "enabled": false,
+    "panelIndex": 45,
+    "SATURATION_HUD_CHILD": { "x": -10.0, "y": 70.0, "position": "topRight" }
+  },
+  "COLOR_SATURATION": { "panelIndex": 46 },
+  "ITEM_PHYSICS": { "seen": true, "panelIndex": 47 },
+  "TNT_COUNTDOWN": { "panelIndex": 48 },
+  "ITEM_TRACKER": {
+    "x": 10.0,
+    "y": 75.0,
+    "position": "middleLeft",
+    "panelIndex": 49
+  },
+  "SHINY_POTS": { "seen": true, "panelIndex": 50 },
+  "3D_SKINS": { "panelIndex": 51 },
+  "GLINT_COLORIZER": { "panelIndex": 52 },
+  "MOMENTUM": { "x": 70.0, "y": 46.0, "position": "topLeft", "panelIndex": 53 },
+  "BLOCK_OUTLINE": { "seen": true, "panelIndex": 54 },
+  "SCREENSHOT": { "seen": true, "panelIndex": 55 },
+  "FOV": { "seen": true, "panelIndex": 56 },
+  "FOG": { "panelIndex": 57 },
+  "AUTO_TEXT_HOTKEY": {
+    "options": {
+      "1hotkey": { "value": "/ec" },
+      "2hotkey": { "value": "/sex" },
+      "3hotkey": { "value": "/anal" }
+    },
+    "seen": true,
+    "panelIndex": 58
+  },
+  "AUTO_TEXT_ACTIONS": { "seen": true, "panelIndex": 59, "actions": [{}] },
+  "MUMBLE_LINK": { "seen": true, "panelIndex": 60 },
+  "TOTEM_COUNTER": { "panelIndex": 61 },
+  "2D_ITEMS": { "panelIndex": 62 },
+  "BOSSBAR": {
+    "x": -2.0,
+    "y": -0.8100052,
+    "position": "topCenter",
+    "seen": true,
+    "panelIndex": 63
+  },
+  "FREELOOK": {
+    "options": { "smoothCamera": false, "freelook": "KEY_R" },
+    "seen": true,
+    "panelIndex": 64
+  },
+  "PVP_INFO": {
+    "panelIndex": 65,
+    "PVP_INFO_MELEE_CHILD": { "x": 50.0, "y": 50.0, "position": "topRight" },
+    "PVP_INFO_HEALTH_CHILD": { "x": 50.0, "y": 50.0, "position": "topRight" },
+    "PVP_INFO_PROJECTILE_CHILD": {
+      "x": 50.0,
+      "y": 50.0,
+      "position": "topRight"
+    }
+  },
+  "MARKERS": { "panelIndex": 66 },
+  "SNAPLOOK": { "panelIndex": 67 },
+  "TEAM_VIEW": { "panelIndex": 68 },
+  "PACK_DISPLAY": { "panelIndex": 69 },
+  "MENU_BLUR": { "panelIndex": 70 },
+  "MINIMAP": { "panelIndex": 71 },
+  "HITBOX": { "panelIndex": 72 },
+  "LIGHTING": { "panelIndex": 73 },
+  "WEATHER_CHANGER": { "enabled": true, "panelIndex": 74 },
+  "CHUNK_BORDERS": { "panelIndex": 75 },
+  "SOUND_CHANGER": { "panelIndex": 76 },
+  "WAILA": { "panelIndex": 77 },
+  "HURT_CAM": {
+    "enabled": true,
+    "options": { "disableHurtCam": true },
+    "seen": true,
+    "panelIndex": 79
+  },
+  "TIER_TAGGER": {
+    "enabled": true,
+    "seen": true,
+    "lastModified": 1755783261725,
+    "panelIndex": 78,
+    "TIER_TAGGER_PRIMARY": {
+      "options": {
+        "modeBySource": { "MCTIERS_COM": "vanilla" },
+        "gameMode": "vanilla"
+      }
+    },
+    "TIER_TAGGER_SECONDARY": { "options": { "gameMode": "vanilla" } }
+  },
+  "DAMAGE_TINT": { "panelIndex": 81 },
+  "MOB_SIZE": { "panelIndex": 80 },
+  "SKYBLOCK": {
+    "seen": true,
+    "panelIndex": 82,
+    "SKYBLOCK_HEALTH_HUD": { "enabled": false },
+    "SKYBLOCK_MANA_HUD": { "enabled": false },
+    "SKYBLOCK_KUUDRA_ARMOR_STACKS_HUD": { "enabled": false },
+    "SKYBLOCK_DEF_HUD": { "enabled": false },
+    "SKYBLOCK_SPEED_HUD": { "enabled": false },
+    "SKYBLOCK_VISITOR_HUD": { "enabled": false },
+    "ETHERWARP_PREVIEW": { "enabled": false },
+    "SKYBLOCK_VISITOR_ALERT": { "enabled": false },
+    "SKYBLOCK_RARITY_BACKGROUND": { "enabled": false },
+    "DUNGEON_WAYPOINTS": { "dungeonWaypoints": {} },
+    "SKYBLOCK_LOCK_MOUSE": { "enabled": false },
+    "SKYBLOCK_SEA_CREATURE_ALERT": {
+      "options": {
+        "skyBlockSeaCreatureAlerts": [
+          "Great White Shark",
+          "Thunder",
+          "Lord Jawbus",
+          "Grim Reaper",
+          "The Loch Emperor",
+          "Yeti",
+          "Reindrake",
+          "Wiki Tiki",
+          "Water Hydra",
+          "Phantom Fisher",
+          "Alligator",
+          "Abyssal Miner",
+          "Fiery Scuttler",
+          "Blue Ringed Octopus",
+          "Ragnarok",
+          "Plhlegblast",
+          "Titanoboa"
+        ]
+      }
+    },
+    "SKYBLOCK_INVENTORY_BUTTONS": { "inventoryButtons": [] },
+    "SKYBLOCK_BURROW_LOCATING": {
+      "enabled": false,
+      "options": {
+        "ritualClosestWarpAllowed": [
+          "Ruins",
+          "Museum",
+          "Stonk Auction",
+          "Spawn"
+        ]
+      }
+    },
+    "SKYBLOCK_END_NODE_HIGHLIGHT": { "enabled": false },
+    "SKYBLOCK_GLOWING_MUSHROOM_HIGHLIGHT": { "enabled": false },
+    "SKYBLOCK_DUNGEON_ROUTES": {
+      "dungeonRoutesRoomWhitelist": [],
+      "dungeonRoutesRoomBlacklist": []
+    },
+    "SKYBLOCK_DUNGEON_NAMETAGS": { "enabled": true },
+    "SKYBLOCK_TERMINAL_SPLITS": { "enabled": true },
+    "SKYBLOCK_HIDE_EX_COOPS": { "enabled": false },
+    "SKYBLOCK_HIDE_MAGIC_SOUP_MESSAGES": { "enabled": false },
+    "SKYBLOCK_HIDE_PLAYERS_NEAR_NPC": { "enabled": false }
+  },
+  "ITEM_CUSTOMIZER": {
+    "panelIndex": 83,
+    "CUSTOM_HELD_ITEMS": {
+      "individualConfigs": {
+        "global": { "hands": "mainHand" },
+        "emptyArms": { "hands": "mainHand" }
+      }
+    },
+    "CUSTOM_DROPPED_ITEMS": {
+      "options": {
+        "playerHeadScale": 2.5,
+        "goldIngotScale": 2.5,
+        "goldAppleScale": 2.5,
+        "goldOreScale": 2.5,
+        "goldNuggetScale": 2.5
+      }
+    }
+  },
+  "HORSE_STATS": { "enabled": false, "panelIndex": 93 },
+  "OVERLAY_MOD": {
+    "options": { "fireHeight": 0.03, "disableDamageOverlay": true },
+    "seen": true,
+    "panelIndex": 85
+  },
+  "REWIND": { "enabled": false, "panelIndex": 86 },
+  "AUDIO_SUBTITLES": { "panelIndex": 87 },
+  "ACTION_BAR": {
+    "seen": true,
+    "lastModified": 1790593999337,
+    "panelIndex": 88
+  },
+  "SHIELDS": { "seen": true, "panelIndex": 89 },
+  "LIGHT_OVERLAY": { "panelIndex": 90, "enabledToggle": true },
+  "KILL_SOUNDS": { "panelIndex": 84 },
+  "INVENTORY_MOD": {
+    "seen": true,
+    "lastModified": 1790593987329,
+    "panelIndex": 91,
+    "SLOT_LOCKING": { "lockedSlots": [] },
+    "SLOT_BINDING": {
+      "options": { "slotBindingLockBound": false },
+      "bindings": {}
+    }
+  },
+  "F3_DISPLAY": {
+    "panelIndex": 92,
+    "default_game_info": {
+      "options": {
+        "name": "Game Info",
+        "background": true,
+        "labelColor": { "value": -1504700 },
+        "valueColor": { "value": -39309 },
+        "elements": ["fps", "minecraft_version", "server_info"]
+      }
+    },
+    "default_player_info": {
+      "options": {
+        "name": "Player Info",
+        "background": true,
+        "labelColor": { "value": -14036200 },
+        "valueColor": { "value": -9439109 },
+        "elements": ["chunk_position", "light_level", "biome", "position"]
+      },
+      "y": 36.0,
+      "position": "topLeft"
+    },
+    "default_world_info": {
+      "options": {
+        "name": "World Info",
+        "background": true,
+        "labelColor": { "value": -16742145 },
+        "valueColor": { "value": -10446593 },
+        "elements": [
+          "render_distance",
+          "sounds",
+          "entities",
+          "particles",
+          "day"
+        ]
+      },
+      "y": 108.0,
+      "position": "topLeft"
+    },
+    "default_system_specs": {
+      "options": {
+        "name": "System Specs",
+        "background": true,
+        "labelColor": { "value": -7263271 },
+        "valueColor": { "value": -1998849 },
+        "elements": ["gpu_utilization", "memory_usage", "hardware_info"]
+      },
+      "position": "topRight"
+    },
+    "default_target_info": {
+      "options": {
+        "name": "Target Info",
+        "background": true,
+        "labelColor": { "value": -284416 },
+        "valueColor": { "value": -6048 },
+        "elements": ["target_fluid", "target_entity", "target_block"]
+      },
+      "y": 81.0,
+      "position": "topRight"
+    },
+    "default_pie_chart": {
+      "options": {
+        "scale": 0.5,
+        "name": "Pie Chart",
+        "background": true,
+        "labelColor": { "value": -9078785 },
+        "valueColor": { "value": -4740609 },
+        "elements": ["pie_chart"]
+      },
+      "y": -67.5,
+      "position": "bottomRight"
+    },
+    "modules": [
+      "default_game_info",
+      "default_player_info",
+      "default_world_info",
+      "default_system_specs",
+      "default_target_info",
+      "default_pie_chart"
+    ],
+    "addedDefaultModules": true
+  },
+  "GUI_SCALE": { "panelIndex": 95 },
+  "KNOCKBACK_TRAINER": { "panelIndex": 96 },
+  "RADIO": { "enabled": false, "seen": true, "panelIndex": 97 },
+  "LOCATOR_BAR": { "panelIndex": 94 }
+}

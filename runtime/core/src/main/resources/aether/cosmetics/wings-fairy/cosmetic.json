@@ -1,0 +1,47 @@
+{
+  "id": "wings-fairy",
+  "name": "Fairy Wings",
+  "description": "Shimmering see-through wings that flutter quickly.",
+  "slot": "wings",
+  "rarity": "rare",
+  "translucent": true,
+  "textureSize": [64, 32],
+  "parts": [
+    {
+      "bone": "body",
+      "pivot": [-0.5, 4, 2.4],
+      "rotation": [0, 32, 0],
+      "mirror": true,
+      "animate": {
+        "rot": [0, 26, 0],
+        "speed": 0.55,
+        "flySpeed": 1.5
+      },
+      "children": [
+        {
+          "pivot": [0, 0, 0],
+          "rotation": [0, 0, 32],
+          "cubes": [
+            {
+              "from": [-13, -4, 0],
+              "size": [13, 8, 0],
+              "uv": [0, 0]
+            }
+          ]
+        },
+        {
+          "pivot": [0, 1, 0.3],
+          "rotation": [0, 0, -38],
+          "cubes": [
+            {
+              "from": [-9, -2.5, 0],
+              "size": [9, 5, 0],
+              "uv": [26, 0]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "iconImage": "icon.png"
+}

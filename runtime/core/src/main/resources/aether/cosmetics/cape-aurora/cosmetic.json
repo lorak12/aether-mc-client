@@ -1,0 +1,9 @@
+{
+  "id": "cape-aurora",
+  "name": "Aurora",
+  "description": "Animated northern lights over a starry sky.",
+  "slot": "cape",
+  "rarity": "epic",
+  "frames": 24,
+  "frameTime": 90
+}

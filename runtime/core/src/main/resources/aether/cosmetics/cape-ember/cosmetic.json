@@ -1,0 +1,9 @@
+{
+  "id": "cape-ember",
+  "name": "Ember",
+  "description": "Animated flames with drifting embers.",
+  "slot": "cape",
+  "rarity": "epic",
+  "frames": 16,
+  "frameTime": 70
+}

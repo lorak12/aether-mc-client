@@ -1,15 +1,26 @@
 pub mod auth;
+pub mod backend;
 pub mod config;
 pub mod content;
+pub mod curseforge;
 pub mod download;
 pub mod error;
+pub mod forge;
+pub mod gamefiles;
 pub mod java;
 pub mod launch;
 pub mod loader;
+pub mod logs;
 pub mod modrinth;
 pub mod mrpack;
+pub mod nbt;
+pub mod options;
 pub mod profile;
 pub mod rules;
+pub mod runtime;
+pub mod servers;
+pub mod settings;
+pub mod update;
 pub mod version;
 
 pub use error::{Error, Result};

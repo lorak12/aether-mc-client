@@ -1,411 +1,283 @@
-//! Tauri shell: thin IPC layer over `aether-core`. All logic lives in the core crate.
-use aether_core::auth::{self, DeviceCode};
-use aether_core::config::{AppConfig, ConfigStatus};
-use aether_core::content::{Installer, Lock, LockEntry};
-use aether_core::download::Layout;
-use aether_core::launch;
-use aether_core::modrinth::{Modrinth, ProjectType, SearchResponse};
-use aether_core::profile::{Loader, Profile, ProfileStore};
-use aether_core::version::Manifest;
-use serde::Serialize;
+//! Tauri shell: thin IPC layer over `aether-core`. All logic lives in the core crate; these modules adapt it to
+//! commands, events, the tray and the OS keychain.
+mod accounts;
+mod content;
+mod files;
+mod game;
+mod online;
+mod profiles;
+mod shell;
+
+use aether_core::backend::Backend;
+use aether_core::config::AppConfig;
+use aether_core::curseforge::CurseForge;
+use aether_core::modrinth::Modrinth;
+use aether_core::profile::{Profile, ProfileStore};
+use aether_core::settings::SettingsStore;
+use std::io::Write;
 use std::path::PathBuf;
-use tauri::{AppHandle, Emitter, Manager, State};
+use tauri::Manager;
 use tokio::sync::Mutex;
 
-struct AppState {
+pub(crate) struct AppState {
     root: PathBuf,
     cfg: AppConfig,
     api: Modrinth,
+    cf: Option<CurseForge>,
+    backend: Option<Backend>,
     /// Device-code login in progress.
-    pending_login: Mutex<Option<DeviceCode>>,
-    /// Profile id of the game currently starting or running.
-    running: Mutex<Option<String>>,
+    pending_login: Mutex<Option<aether_core::auth::DeviceCode>>,
+    /// Browser login in progress: set to cancel it.
+    login_cancel: std::sync::Mutex<Option<tokio::sync::oneshot::Sender<()>>>,
+    /// The game currently starting or running.
+    running: Mutex<Option<game::Running>>,
+    /// Aether backend sign-in, per account uuid.
+    token: Mutex<Option<online::CachedToken>>,
+    log: std::sync::Mutex<Option<std::fs::File>>,
 }
 
 impl AppState {
     fn store(&self) -> ProfileStore {
         ProfileStore::new(&self.root)
     }
+    fn settings(&self) -> SettingsStore {
+        SettingsStore::new(&self.root)
+    }
+    fn profile(&self, id: &str) -> Res<Profile> {
+        self.store().load(id).map_err(e)
+    }
+    /// Where a profile's game files and content live.
+    fn game_dir(&self, p: &Profile) -> PathBuf {
+        self.store().game_dir(p)
+    }
+    fn cf(&self) -> Res<&CurseForge> {
+        self.cf.as_ref().ok_or_else(|| "CurseForge needs an API key: set curseforge_api_key in aether.config.json (Settings > About shows where).".to_string())
+    }
+    /// Append a line to `<root>/logs/launcher.log` (what "Upload logs" shares) and stderr.
+    fn log(&self, msg: impl AsRef<str>) {
+        let line = format!("[{}] {}", aether_core::gamefiles::timestamp(now_unix()), msg.as_ref());
+        eprintln!("{line}");
+        if let Ok(mut f) = self.log.lock() {
+            if let Some(f) = f.as_mut() {
+                let _ = writeln!(f, "{line}");
+            }
+        }
+    }
 }
 
-type Res<T> = Result<T, String>;
-fn e<E: std::fmt::Display>(err: E) -> String {
+pub(crate) type Res<T> = Result<T, String>;
+pub(crate) fn e<E: std::fmt::Display>(err: E) -> String {
     err.to_string()
 }
 
-#[tauri::command]
-fn config_status(s: State<AppState>) -> ConfigStatus {
-    s.cfg.status()
+/// Commands that change something (or start a long task): each call is written to the launcher log as an action trail.
+/// Reads and polling (lists, searches, log tails, pings) stay out so the log remains readable.
+const LOGGED_COMMANDS: &[&str] = &[
+    "create_profile", "delete_profile", "duplicate_profile", "update_profile", "set_profile_cover", "set_settings",
+    "install_content", "install_modpack", "import_pack", "set_content_enabled", "remove_local_file", "adopt_local_files",
+    "uninstall_content", "update_all", "update_content", "export_mrpack", "delete_world", "backup_world", "restore_backup",
+    "add_server", "remove_server", "delete_screenshot", "start_login", "finish_login", "browser_login", "cancel_login",
+    "offline_login", "logout", "switch_account", "remove_account", "launch_profile", "kill_game", "upload_logs",
+    "install_update", "restart_app",
+];
+
+pub(crate) fn now_unix() -> i64 {
+    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs() as i64).unwrap_or(0)
 }
 
-#[tauri::command]
-fn list_profiles(s: State<AppState>) -> Res<Vec<Profile>> {
-    s.store().list().map_err(e)
+/// Random hex from the OS RNG.
+pub(crate) fn random_hex(bytes: usize) -> String {
+    let mut b = vec![0u8; bytes];
+    getrandom::fill(&mut b).expect("OS random source");
+    b.iter().map(|x| format!("{x:02x}")).collect()
 }
 
-#[tauri::command]
-fn create_profile(s: State<AppState>, name: String, mc_version: String, loader: Loader) -> Res<Profile> {
-    s.store().create(&name, &mc_version, loader).map_err(e)
+/// Start a new launcher log (the previous one is kept as `launcher.prev.log`).
+fn open_log(root: &std::path::Path) -> Option<std::fs::File> {
+    let dir = root.join("logs");
+    std::fs::create_dir_all(&dir).ok()?;
+    let path = dir.join("launcher.log");
+    if path.exists() {
+        let _ = std::fs::rename(&path, dir.join("launcher.prev.log"));
+    }
+    std::fs::File::create(path).ok()
 }
 
-#[tauri::command]
-fn delete_profile(s: State<AppState>, id: String) -> Res<()> {
-    s.store().delete(&id).map_err(e)
+/// Show and focus the main window (tray, game exit, second instance).
+pub(crate) fn show_main(app: &tauri::AppHandle) {
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.show();
+        let _ = w.unminimize();
+        let _ = w.set_focus();
+    }
 }
 
-#[tauri::command]
-fn duplicate_profile(s: State<AppState>, id: String) -> Res<Profile> {
-    s.store().duplicate(&id).map_err(e)
-}
-
-#[tauri::command]
-fn update_profile(s: State<AppState>, profile: Profile) -> Res<()> {
-    // Only the mutable settings may change from the UI; id/version/loader stay as stored.
-    let store = s.store();
-    let mut cur = store.load(&profile.id).map_err(e)?;
-    cur.name = profile.name;
-    cur.memory_mb = profile.memory_mb.clamp(512, 65536);
-    cur.jvm_args = profile.jvm_args;
-    store.save(&cur).map_err(e)
-}
-
-#[derive(Serialize)]
-struct McVersion {
-    id: String,
-    kind: String,
-}
-
-/// Release versions plus any explicitly requested ids (the client's supported list may include snapshots-style ids).
-#[tauri::command]
-async fn mc_versions(s: State<'_, AppState>) -> Res<Vec<McVersion>> {
-    let m = Manifest::fetch(s.api.http()).await.map_err(e)?;
-    Ok(m.versions.into_iter().filter(|v| v.kind == "release").map(|v| McVersion { id: v.id, kind: v.kind }).collect())
-}
-
-fn parse_kind(k: &str) -> Res<ProjectType> {
-    serde_json::from_value(serde_json::Value::String(k.to_string())).map_err(e)
-}
-
-#[tauri::command]
-async fn search_content(
-    s: State<'_, AppState>,
-    query: String,
-    kind: String,
-    profile_id: Option<String>,
-    offset: u32,
-) -> Res<SearchResponse> {
-    let kind = parse_kind(&kind)?;
-    let (mc, loader) = match profile_id {
-        Some(id) => {
-            let p = s.store().load(&id).map_err(e)?;
-            (Some(p.mc_version), p.loader.modrinth_id().map(String::from))
+fn build_tray(app: &tauri::App) -> tauri::Result<()> {
+    use tauri::menu::{Menu, MenuItem};
+    use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
+    let show = MenuItem::with_id(app, "show", "Show Aether", true, None::<&str>)?;
+    let stop = MenuItem::with_id(app, "stop", "Stop the game", true, None::<&str>)?;
+    let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
+    let menu = Menu::with_items(app, &[&show, &stop, &quit])?;
+    let mut tray = TrayIconBuilder::with_id("main").tooltip("Aether").menu(&menu).show_menu_on_left_click(false);
+    if let Some(icon) = app.default_window_icon() {
+        tray = tray.icon(icon.clone());
+    }
+    tray.on_menu_event(|app, ev| match ev.id().as_ref() {
+        "show" => show_main(app),
+        "stop" => {
+            let app = app.clone();
+            tauri::async_runtime::spawn(async move {
+                let _ = game::kill(&app).await;
+            });
         }
-        None => (None, None),
-    };
-    s.api.search(&query, kind, mc.as_deref(), loader.as_deref(), offset, 20).await.map_err(e)
-}
-
-#[tauri::command]
-async fn install_content(
-    s: State<'_, AppState>,
-    profile_id: String,
-    project_id: String,
-    kind: String,
-    world: Option<String>,
-) -> Res<Vec<LockEntry>> {
-    let profile = s.store().load(&profile_id).map_err(e)?;
-    let inst = Installer { api: &s.api, profile_dir: s.store().dir(&profile.id), profile: &profile };
-    inst.install_project(&project_id, parse_kind(&kind)?, world.as_deref()).await.map_err(e)
-}
-
-#[tauri::command]
-fn list_installed(s: State<AppState>, profile_id: String) -> Res<Vec<LockEntry>> {
-    s.store().load(&profile_id).map_err(e)?;
-    Ok(Lock::load(&s.store().dir(&profile_id)).entries)
-}
-
-#[tauri::command]
-fn uninstall_content(s: State<AppState>, profile_id: String, project_id: String) -> Res<()> {
-    let profile = s.store().load(&profile_id).map_err(e)?;
-    let api = &s.api;
-    Installer { api, profile_dir: s.store().dir(&profile.id), profile: &profile }.uninstall(&project_id).map_err(e)
-}
-
-#[derive(Serialize)]
-struct UpdateInfo {
-    project_id: String,
-    title: String,
-    current: String,
-    latest: String,
-}
-
-#[tauri::command]
-async fn check_updates(s: State<'_, AppState>, profile_id: String) -> Res<Vec<UpdateInfo>> {
-    let profile = s.store().load(&profile_id).map_err(e)?;
-    let inst = Installer { api: &s.api, profile_dir: s.store().dir(&profile.id), profile: &profile };
-    let ups = inst.check_updates().await.map_err(e)?;
-    Ok(ups
-        .into_iter()
-        .map(|(en, v)| UpdateInfo { project_id: en.project_id, title: en.title, current: en.version_id, latest: v.version_number })
-        .collect())
-}
-
-#[tauri::command]
-async fn update_all(s: State<'_, AppState>, profile_id: String) -> Res<usize> {
-    let profile = s.store().load(&profile_id).map_err(e)?;
-    let inst = Installer { api: &s.api, profile_dir: s.store().dir(&profile.id), profile: &profile };
-    let ups = inst.check_updates().await.map_err(e)?;
-    for (entry, newer) in &ups {
-        inst.apply_update(entry, newer).await.map_err(e)?;
-    }
-    Ok(ups.len())
-}
-
-#[tauri::command]
-async fn import_mrpack(s: State<'_, AppState>, path: String) -> Res<Profile> {
-    aether_core::mrpack::import(s.api.http(), &s.store(), std::path::Path::new(&path)).await.map_err(e)
-}
-
-const KEYRING_SERVICE: &str = "aether-launcher";
-/// Windows Credential Manager caps a secret at 2560 bytes; Microsoft refresh tokens can exceed that, so store in chunks.
-const KEYRING_CHUNK: usize = 2000;
-
-#[tauri::command]
-async fn start_login(s: State<'_, AppState>) -> Res<DeviceCode> {
-    let id = s.cfg.azure().map_err(e)?;
-    let code = auth::start_device_login(s.api.http(), id).await.map_err(e)?;
-    *s.pending_login.lock().await = Some(code.clone());
-    Ok(code)
-}
-
-#[derive(Serialize)]
-struct AccountInfo {
-    username: String,
-    uuid: String,
-}
-
-fn chunk_entry(uuid: &str, i: usize) -> keyring::Result<keyring::Entry> {
-    keyring::Entry::new(KEYRING_SERVICE, &format!("{uuid}#{i}"))
-}
-
-/// Delete chunks `from..` until one is missing.
-fn delete_chunks(uuid: &str, from: usize) {
-    let mut i = from;
-    while let Ok(entry) = chunk_entry(uuid, i) {
-        if entry.delete_credential().is_err() {
-            break;
+        "quit" => app.exit(0),
+        _ => {}
+    })
+    .on_tray_icon_event(|tray, ev| {
+        if let TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. } = ev {
+            show_main(tray.app_handle());
         }
-        i += 1;
-    }
-}
-
-fn store_refresh(uuid: &str, token: &str) -> Res<()> {
-    let chunks: Vec<&[u8]> = token.as_bytes().chunks(KEYRING_CHUNK).collect();
-    for (i, c) in chunks.iter().enumerate() {
-        chunk_entry(uuid, i).and_then(|en| en.set_secret(c)).map_err(|err| format!("couldn't save sign-in to the OS keychain: {err}"))?;
-    }
-    delete_chunks(uuid, chunks.len());
+    })
+    .build(app)?;
     Ok(())
-}
-
-fn load_refresh(uuid: &str) -> Option<String> {
-    let mut bytes = Vec::new();
-    for i in 0.. {
-        match chunk_entry(uuid, i).and_then(|en| en.get_secret()) {
-            Ok(c) => bytes.extend(c),
-            Err(_) => break,
-        }
-    }
-    String::from_utf8(bytes).ok().filter(|t| !t.is_empty())
-}
-
-fn active_uuid(root: &std::path::Path) -> Option<String> {
-    std::fs::read_to_string(root.join("active_account")).ok().map(|u| u.trim().to_string()).filter(|u| !u.is_empty())
-}
-
-#[tauri::command]
-async fn finish_login(s: State<'_, AppState>) -> Res<AccountInfo> {
-    let id = s.cfg.azure().map_err(e)?.to_string();
-    let code = s.pending_login.lock().await.clone().ok_or("no login in progress")?;
-    let tokens = auth::poll_device_login(s.api.http(), &id, &code).await.map_err(e)?;
-    let session = auth::minecraft_session(s.api.http(), &tokens.access_token).await.map_err(e)?;
-    let refresh = tokens.refresh_token.as_deref().ok_or("Microsoft returned no refresh token; try signing in again")?;
-    store_refresh(&session.uuid, refresh)?;
-    // remember which account is active
-    std::fs::write(s.root.join("active_account"), &session.uuid).map_err(e)?;
-    std::fs::write(s.root.join("active_account_name"), &session.username).map_err(e)?;
-    Ok(AccountInfo { username: session.username, uuid: session.uuid })
-}
-
-#[tauri::command]
-fn logout(s: State<AppState>) -> Res<()> {
-    if let Some(uuid) = active_uuid(&s.root) {
-        delete_chunks(&uuid, 0);
-    }
-    let _ = std::fs::remove_file(s.root.join("active_account"));
-    let _ = std::fs::remove_file(s.root.join("active_account_name"));
-    Ok(())
-}
-
-#[tauri::command]
-fn account_name(s: State<AppState>) -> Option<String> {
-    active_uuid(&s.root)?;
-    // Signed in but the name isn't cached yet (it is after the next launch): empty string, not None.
-    Some(std::fs::read_to_string(s.root.join("active_account_name")).map(|n| n.trim().to_string()).unwrap_or_default())
-}
-
-#[derive(Clone, Serialize)]
-struct LaunchProgress {
-    stage: String,
-    done: usize,
-    total: usize,
-}
-
-#[derive(Clone, Serialize)]
-struct GameExit {
-    code: Option<i32>,
-    /// Last lines of output when the game crashed.
-    log_tail: Option<String>,
-}
-
-fn log_tail(path: &std::path::Path, lines: usize) -> String {
-    let text = std::fs::read(path).map(|b| String::from_utf8_lossy(&b).into_owned()).unwrap_or_default();
-    // Mojang's log4j config emits XML events for launchers; keep just the messages and raw stderr lines.
-    let all: Vec<&str> = text
-        .lines()
-        .filter_map(|l| {
-            let t = l.trim();
-            if let Some(start) = t.find("<![CDATA[") {
-                let msg = &t[start + 9..];
-                Some(msg.split("]]>").next().unwrap_or(msg))
-            } else if t.starts_with("<log4j:") || t.starts_with("</log4j:") {
-                None
-            } else {
-                Some(l)
-            }
-        })
-        .collect();
-    all[all.len().saturating_sub(lines)..].join("\n")
-}
-
-/// Refresh the Microsoft session, install whatever the profile needs, and start Minecraft.
-/// Emits `launch-progress` while preparing and `game-exit` when the game closes. Returns the player name.
-#[tauri::command]
-async fn launch_profile(app: AppHandle, s: State<'_, AppState>, profile_id: String) -> Res<String> {
-    {
-        let mut running = s.running.lock().await;
-        if running.is_some() {
-            return Err("Minecraft is already running".into());
-        }
-        *running = Some(profile_id.clone());
-    }
-    let result = start_game(&app, &s, &profile_id).await;
-    if result.is_err() {
-        *s.running.lock().await = None;
-    }
-    result
-}
-
-async fn start_game(app: &AppHandle, s: &AppState, profile_id: &str) -> Res<String> {
-    let store = s.store();
-    let profile = store.load(profile_id).map_err(e)?;
-    let http = s.api.http();
-
-    let emit = |stage: &str, done: usize, total: usize| {
-        // Throttle: assets alone are thousands of files.
-        if done == 0 || done == total || done % (total / 50).max(1) == 0 {
-            let _ = app.emit("launch-progress", LaunchProgress { stage: stage.into(), done, total });
-        }
-    };
-
-    emit("account", 0, 1);
-    let client_id = s.cfg.azure().map_err(e)?;
-    let uuid = active_uuid(&s.root).ok_or("Sign in with Microsoft first (Settings)")?;
-    let token = load_refresh(&uuid).ok_or("Your sign-in expired or was removed. Sign in again in Settings.")?;
-    let account = auth::login_with_refresh(http, client_id, &token)
-        .await
-        .map_err(|err| format!("Couldn't refresh your Microsoft sign-in ({err}). Sign in again in Settings."))?;
-    if let Some(r) = &account.refresh_token {
-        store_refresh(&uuid, r)?;
-    }
-    let username = account.session.username.clone();
-    let _ = std::fs::write(s.root.join("active_account_name"), &username);
-
-    let game_dir = store.dir(&profile.id);
-    let layout = Layout::new(&s.root);
-    let argv = launch::prepare(http, &layout, &profile, game_dir.clone(), account.session, emit).await.map_err(e)?;
-
-    let logs = game_dir.join("logs");
-    std::fs::create_dir_all(&logs).map_err(e)?;
-    let log_path = logs.join("launcher-output.log");
-    let log = std::fs::File::create(&log_path).map_err(e)?;
-    let mut child = std::process::Command::new(&argv[0])
-        .args(&argv[1..])
-        .current_dir(&game_dir)
-        .stdin(std::process::Stdio::null())
-        .stdout(log.try_clone().map_err(e)?)
-        .stderr(log)
-        .spawn()
-        .map_err(|err| format!("couldn't start Java ({}): {err}", argv[0]))?;
-
-    let _ = app.emit("launch-progress", LaunchProgress { stage: "running".into(), done: 1, total: 1 });
-    let app = app.clone();
-    tauri::async_runtime::spawn_blocking(move || {
-        let code = child.wait().ok().and_then(|st| st.code());
-        let crashed = code != Some(0);
-        let log_tail = crashed.then(|| log_tail(&log_path, 40));
-        let state = app.state::<AppState>();
-        *state.running.blocking_lock() = None;
-        let _ = app.emit("game-exit", GameExit { code, log_tail });
-    });
-    Ok(username)
-}
-
-#[tauri::command]
-async fn running_profile(s: State<'_, AppState>) -> Res<Option<String>> {
-    Ok(s.running.lock().await.clone())
-}
-
-#[tauri::command]
-fn has_account(s: State<AppState>) -> bool {
-    active_uuid(&s.root).is_some()
 }
 
 pub fn run() {
+    let handler: Box<dyn Fn(tauri::ipc::Invoke<tauri::Wry>) -> bool + Send + Sync> = Box::new(tauri::generate_handler![
+        // profiles and settings
+        profiles::config_status,
+        profiles::list_profiles,
+        profiles::create_profile,
+        profiles::delete_profile,
+        profiles::duplicate_profile,
+        profiles::update_profile,
+        profiles::set_profile_cover,
+        profiles::get_settings,
+        profiles::set_settings,
+        profiles::mc_versions,
+        profiles::loader_versions,
+        profiles::aether_versions,
+        profiles::list_javas,
+        profiles::probe_java,
+        // content
+        content::search_projects,
+        content::project_details,
+        content::project_versions,
+        content::install_plan,
+        content::install_content,
+        content::install_modpack,
+        content::list_installed,
+        content::list_local_files,
+        content::set_content_enabled,
+        content::remove_local_file,
+        content::adopt_local_files,
+        content::uninstall_content,
+        content::check_updates,
+        content::update_all,
+        content::update_content,
+        content::import_pack,
+        content::export_candidates,
+        content::export_mrpack,
+        // worlds, servers, screenshots
+        files::list_worlds,
+        files::delete_world,
+        files::backup_world,
+        files::list_backups,
+        files::restore_backup,
+        files::list_servers,
+        files::add_server,
+        files::remove_server,
+        files::ping_server,
+        files::list_screenshots,
+        files::delete_screenshot,
+        files::copy_screenshot,
+        // accounts
+        accounts::start_login,
+        accounts::finish_login,
+        accounts::browser_login,
+        accounts::cancel_login,
+        accounts::offline_login,
+        accounts::logout,
+        accounts::account_name,
+        accounts::list_accounts,
+        accounts::switch_account,
+        accounts::remove_account,
+        accounts::skin_url,
+        // game
+        game::launch_profile,
+        game::kill_game,
+        game::running_profile,
+        game::read_game_log,
+        game::upload_logs,
+        // online
+        online::backend_call,
+        online::backend_status,
+        online::check_update,
+        online::install_update,
+        // shell
+        shell::open_path,
+        shell::open_url,
+        shell::reveal_path,
+        shell::restart_app,
+        shell::open_logs_window,
+        shell::system_memory_mb,
+        shell::app_info,
+        shell::log_line,
+    ]);
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .setup(|app| {
             let root = app.path().app_data_dir()?;
             std::fs::create_dir_all(&root)?;
             AppConfig::ensure_file(&root)?;
-            eprintln!("Aether config file: {}", root.join("aether.config.json").display());
             let cfg = AppConfig::load(&root);
-            app.manage(AppState { root, cfg, api: Modrinth::new()?, pending_login: Mutex::new(None), running: Mutex::new(None) });
+            let api = Modrinth::new()?;
+            let cf = cfg.curseforge_api_key.as_deref().and_then(|k| CurseForge::new(k).ok());
+            let backend = cfg.backend_url.as_deref().map(|u| Backend::new(api.http().clone(), u));
+            let state = AppState {
+                log: std::sync::Mutex::new(open_log(&root)),
+                root,
+                cfg,
+                api,
+                cf,
+                backend,
+                pending_login: Mutex::new(None),
+                login_cancel: std::sync::Mutex::new(None),
+                running: Mutex::new(None),
+                token: Mutex::new(None),
+            };
+            state.log(format!("Aether {} starting; data folder {}", env!("CARGO_PKG_VERSION"), state.root.display()));
+            state.log(format!(
+                "system: {} {}, {} logical CPUs; backend {}; CurseForge {}",
+                std::env::consts::OS,
+                std::env::consts::ARCH,
+                std::thread::available_parallelism().map(|n| n.get()).unwrap_or(0),
+                state.cfg.backend_url.as_deref().unwrap_or("not configured"),
+                if state.cf.is_some() { "enabled" } else { "disabled (no API key)" }
+            ));
+            // Screenshots, world icons and covers in custom game folders are served through the asset protocol too.
+            if let Ok(list) = state.store().list() {
+                for p in list.iter().filter(|p| p.game_dir.is_some()) {
+                    let _ = app.asset_protocol_scope().allow_directory(state.game_dir(p), true);
+                }
+            }
+            app.manage(state);
+            if let Err(err) = build_tray(app) {
+                eprintln!("tray icon unavailable: {err}");
+            }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![
-            config_status,
-            list_profiles,
-            create_profile,
-            delete_profile,
-            duplicate_profile,
-            update_profile,
-            mc_versions,
-            search_content,
-            install_content,
-            list_installed,
-            uninstall_content,
-            check_updates,
-            update_all,
-            import_mrpack,
-            start_login,
-            finish_login,
-            logout,
-            has_account,
-            account_name,
-            launch_profile,
-            running_profile,
-        ])
+        .invoke_handler(move |invoke| {
+            let cmd = invoke.message.command();
+            if LOGGED_COMMANDS.contains(&cmd) {
+                if let Some(state) = invoke.message.webview_ref().try_state::<AppState>() {
+                    state.log(format!("action: {cmd}"));
+                }
+            }
+            handler(invoke)
+        })
         .run(tauri::generate_context!())
         .expect("error while running Aether");
 }

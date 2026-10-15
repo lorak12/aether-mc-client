@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Kite Client Home - Dense Modules</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1440px;height:900px;overflow:hidden}
+body{background:#0E0E11;color:#F5F5F7;font-family:'Figtree',sans-serif;font-size:12px;line-height:1.35}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+.top{height:52px;display:flex;align-items:center;gap:10px;padding:0 12px;background:#131317;border-bottom:1px solid #2A2A33}
+.mark{width:22px;height:22px;flex:none}
+.brand{font-weight:700;font-size:14px;margin-right:6px}
+.ib{width:30px;height:30px;border-radius:10px;border:1px solid #2A2A33;background:#1C1C22;display:grid;place-items:center;color:#9A9AA8;font-size:14px}
+.coin{display:flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;background:#1C1C22;border:1px solid #2A2A33;font-weight:600}
+.coin i{width:12px;height:12px;border-radius:50%;background:#8B5CF6}
+.search{margin-left:auto;display:flex;align-items:center;gap:8px;width:320px;height:36px;padding:6px 10px;border-radius:12px;border:1px solid #2A2A33;background:#1C1C22;color:#9A9AA8}
+.search kbd{margin-left:auto;font:inherit;font-size:11px;padding:1px 6px;border-radius:6px;border:1px solid #2A2A33;color:#9A9AA8}
+.acct{display:flex;align-items:center;gap:8px;height:30px;padding:0 10px 0 4px;border-radius:999px;background:#1C1C22;border:1px solid #2A2A33;font-weight:600}
+.av{width:22px;height:22px;border-radius:50%;background:#8B5CF6;display:grid;place-items:center;font-size:11px;font-weight:700;color:#0E0E11;flex:none}
+.win{display:flex;gap:2px;margin-left:6px}
+.win span{width:34px;height:30px;display:grid;place-items:center;color:#9A9AA8;border-radius:10px}
+.win span:last-child:hover{background:#7F1D1D;color:#F5F5F7}
+.shell{display:grid;grid-template-columns:224px 1fr 288px;height:848px}
+.rail{padding:12px;display:flex;flex-direction:column;gap:4px;min-height:0}
+.left{border-right:1px solid #2A2A33}
+.right{border-left:1px solid #2A2A33}
+.nav{display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:12px;color:#9A9AA8;font-weight:500}
+.nav b{width:16px;height:16px;border-radius:5px;border:1.5px solid currentColor;flex:none}
+.nav.on{background:#8B5CF6;color:#0E0E11;font-weight:700}
+.nav.on b{border-color:#0E0E11}
+.sp{margin-top:auto}
+.newp{height:36px;border-radius:12px;border:1px dashed #3A3A46;color:#F5F5F7;font-weight:600;margin-bottom:4px}
+.main{padding:12px;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:220px 200px 200px 1fr;gap:8px;min-width:0;min-height:0}
+.card{position:relative;background:#1C1C22;border:1px solid #2A2A33;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px;min-width:0;overflow:hidden;transition:border-color .15s}
+.card:hover{border-color:#5B5B6B}
+.span2{grid-column:span 2}
+.span4{grid-column:span 4}
+.tab{align-self:flex-start;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#0E0E11;background:#8B5CF6;padding:2px 8px;border-radius:6px}
+.badge{position:absolute;top:-9px;right:12px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;background:#0E0E11;border:1px solid #8B5CF6;color:#C4B5FD}
+.badge.lim{border-color:#F5F5F7;color:#F5F5F7}
+.badge.upd{border-color:#9A9AA8;color:#9A9AA8}
+h3{font-size:16px;font-weight:700;line-height:1.2}
+.m{color:#9A9AA8;font-size:12px}
+.prog{height:6px;border-radius:999px;background:#2A2A33;overflow:hidden}
+.prog i{display:block;height:100%;width:31%;background:#8B5CF6;border-radius:999px}
+.btn{height:32px;border-radius:12px;background:#8B5CF6;color:#0E0E11;font-weight:700;padding:0 14px;align-self:flex-start}
+.btn.o{background:none;border:1px solid #2A2A33;color:#F5F5F7}
+.push{margin-top:auto}
+.row{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid #2A2A33;padding-top:6px;font-size:11px}
+.row b{font-weight:600}
+.dl{font-weight:600;font-size:11px;display:flex;justify-content:space-between}
+.dot{width:8px;height:8px;border-radius:50%;background:#8B5CF6;flex:none}
+.grey{background:#5B5B6B}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-size:11px;padding:2px 7px;border-radius:999px;background:#0E0E11;border:1px solid #2A2A33;color:#9A9AA8}
+.side{padding:12px;display:flex;flex-direction:column;gap:8px}
+.fhead{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px}
+.fcard{background:#1C1C22;border:1px solid #2A2A33;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px;transition:border-color .15s}
+.fcard:hover{border-color:#5B5B6B}
+.frow{display:flex;align-items:center;gap:10px}
+.fav{width:30px;height:30px;border-radius:50%;background:#2A2A33;display:grid;place-items:center;font-weight:700;font-size:12px;flex:none}
+.fname{font-weight:600;font-size:13px}
+.fsub{color:#9A9AA8;font-size:11px}
+.label{color:#9A9AA8;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-top:6px}
+.dl2{margin-left:auto;font-size:11px;color:#9A9AA8}
+.list{display:flex;flex-direction:column;gap:6px}
+.list div{display:flex;justify-content:space-between;gap:8px;font-size:11px;padding:4px 0;border-bottom:1px solid #2A2A33}
+.list div:last-child{border-bottom:0}
+</style>
+</head>
+<body>
+<header class="top">
+  <svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 21 10 12 22 3 10Z" fill="#8B5CF6"/><path d="M12 2v20M3 10h18" stroke="#0E0E11" stroke-width="1.5"/></svg>
+  <div class="brand">Kite Client</div>
+  <button class="ib" aria-label="Back">&#8249;</button>
+  <button class="ib" aria-label="Forward">&#8250;</button>
+  <div class="coin"><i></i>750</div>
+  <div class="search">Search <kbd>Ctrl K</kbd></div>
+  <button class="ib" aria-label="Notifications">&#9711;</button>
+  <div class="acct"><div class="av">N</div>Notch</div>
+  <div class="win"><span>&#8212;</span><span>&#9633;</span><span>&#10005;</span></div>
+</header>
+
+<div class="shell">
+  <nav class="rail left">
+    <a class="nav on"><b></b>Home</a>
+    <a class="nav"><b></b>Profiles</a>
+    <a class="nav"><b></b>Content</a>
+    <a class="nav"><b></b>Explore</a>
+    <a class="nav"><b></b>Community</a>
+    <a class="nav"><b></b>News</a>
+    <a class="nav"><b></b>Store</a>
+    <div class="sp"></div>
+    <button class="newp">+ New profile</button>
+    <a class="nav"><b></b>Settings</a>
+  </nav>
+
+  <main class="main">
+    <section class="card span2">
+      <span class="badge">Active</span>
+      <span class="tab">Profile</span>
+      <h3>Kite 1.21.11 Fabric</h3>
+      <div class="m">Fabric 0.16.9 &middot; 48 mods &middot; last played 2 h ago</div>
+      <div class="push dl"><span>Downloading assets 1,204 / 3,876</span><span>31%</span></div>
+      <div class="prog"><i></i></div>
+      <button class="btn">Launch</button>
+    </section>
+
+    <section class="card">
+      <span class="tab">Profile</span>
+      <h3>Vanilla 1.21.4</h3>
+      <div class="m">Vanilla &middot; 0 mods &middot; 14 h played</div>
+      <button class="btn o push">Play</button>
+    </section>
+
+    <section class="card">
+      <span class="tab">Profile</span>
+      <h3>Forge 1.20.1</h3>
+      <div class="m">Forge 47.3 &middot; 112 mods</div>
+      <div class="chips push"><span class="chip">Java 17</span><span class="chip">4 GB</span></div>
+      <button class="btn o">Play</button>
+    </section>
+
+    <section class="card">
+      <span class="badge">New</span>
+      <span class="tab">Profile</span>
+      <h3>Creative test</h3>
+      <div class="m">Snapshot 26w41a &middot; 6 mods</div>
+      <div class="chips push"><span class="chip">Test</span></div>
+    </section>
+
+    <section class="card span2">
+      <span class="tab">Continue</span>
+      <h3>Continue playing</h3>
+      <div class="m">World &ldquo;Mossgate&rdquo; on Kite 1.21.11 Fabric</div>
+      <div class="row push"><b>Mossgate SMP &middot; day 412</b><span class="m">2 h 14 m</span></div>
+      <button class="btn">Resume</button>
+    </section>
+
+    <section class="card">
+      <span class="badge">New</span>
+      <span class="tab">Announce</span>
+      <h3>Kite 3.2 ships</h3>
+      <div class="m">Fabric 0.16 support and a rebuilt mod list.</div>
+      <div class="m push">Posted today</div>
+    </section>
+
+    <section class="card span2">
+      <span class="tab">Recent</span>
+      <h3>Recently updated</h3>
+      <div class="list push">
+        <div><span>Kite 1.21.11 Fabric</span><b>6 mods</b></div>
+        <div><span>Forge 1.20.1</span><b>14 mods</b></div>
+        <div><span>Creative test</span><b>2 mods</b></div>
+        <div><span>Vanilla 1.21.4</span><b>0 mods</b></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <span class="badge upd">Update</span>
+      <span class="tab">Content</span>
+      <h3>Sodium 0.6.13</h3>
+      <div class="m push">2.1M downloads</div>
+    </section>
+
+    <section class="card">
+      <span class="badge lim">Limited</span>
+      <span class="tab">Content</span>
+      <h3>Iris Shaders</h3>
+      <div class="m push">1.8M downloads</div>
+    </section>
+
+    <section class="card span4">
+      <span class="badge lim">Limited</span>
+      <span class="tab">Announce</span>
+      <div class="row"><b>Winter cape bundle ends Sunday</b><span class="m">750 coins</span></div>
+    </section>
+  </main>
+
+  <aside class="rail right side">
+    <div class="fhead"><span>Friends &middot; 2 online</span><span class="dl2">Manage</span></div>
+    <div class="fcard">
+      <div class="frow"><div class="fav">J</div><div><div class="fname">jeb_</div><div class="fsub">Playing on play.example.net</div></div><span class="dot push"></span></div>
+    </div>
+    <div class="fcard">
+      <div class="frow"><div class="fav">D</div><div><div class="fname">Dinnerbone</div><div class="fsub">In the launcher</div></div><span class="dot push"></span></div>
+    </div>
+    <div class="label">Offline &middot; 1</div>
+    <div class="fcard">
+      <div class="frow"><div class="fav">O</div><div><div class="fname">Ocelot</div><div class="fsub">Last seen 3 d ago</div></div><span class="dot grey push"></span></div>
+    </div>
+  </aside>
+</div>
+</body>
+</html>

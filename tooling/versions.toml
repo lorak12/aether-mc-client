@@ -1,31 +1,49 @@
-# Supported Minecraft versions. Adding a version = new adapter + entry here.
+# Metadata for selected Minecraft adapters; launcher/core/src/runtime.rs is the audited support list.
 # java/renderer values are initial assumptions; launcher reads real javaVersion from Mojang's version JSON.
 
 [[version]]
 mc = "1.7.10"
-adapter = "v1_7_10"
+adapter = "legacy/v1_7_10"
 java = 8
-loader = "launchwrapper"
+loader = "fabric"
 renderer = "gl"
-mappings = "mcp"
+mappings = "yarn"
 tier = 2
 
 [[version]]
 mc = "1.8.9"
-adapter = "v1_8_9"
+adapter = "legacy/v1_8_9"
 java = 8
-loader = "launchwrapper"
+loader = "fabric"
 renderer = "gl"
-mappings = "mcp"
+mappings = "yarn"
 tier = 1
 
 [[version]]
 mc = "1.12.2"
-adapter = "v1_12_2"
+adapter = "legacy/v1_12_2"
 java = 8
-loader = "launchwrapper"
+loader = "fabric"
 renderer = "gl"
-mappings = "mcp"
+mappings = "yarn"
+tier = 2
+
+[[version]]
+mc = "1.19.3"
+adapter = "v1_19_3"
+java = 17
+loader = "fabric"
+renderer = "gl"
+mappings = "mojmap"
+tier = 2
+
+[[version]]
+mc = "1.19.4"
+adapter = "v1_19_4"
+java = 17
+loader = "fabric"
+renderer = "gl"
+mappings = "mojmap"
 tier = 2
 
 [[version]]
@@ -39,36 +57,45 @@ tier = 1
 
 [[version]]
 mc = "26.1"
-adapter = "v26_x"
-java = 25   # verify against manifest
+adapter = "v26_1"
+java = 25
 loader = "fabric"
-renderer = "vulkan"   # Blaze3D; verify in render spike
+renderer = "gl"
+mappings = "mojmap"
+tier = 1
+
+[[version]]
+mc = "26.1.1"
+adapter = "v26_1_1"
+java = 25
+loader = "fabric"
+renderer = "gl"
+mappings = "mojmap"
+tier = 1
+
+[[version]]
+mc = "26.1.2"
+adapter = "v26_1_2"
+java = 25
+loader = "fabric"
+renderer = "gl"
 mappings = "mojmap"
 tier = 1
 
 [[version]]
 mc = "26.2"
-adapter = "v26_x"
+adapter = "v26_2"
 java = 25
 loader = "fabric"
-renderer = "vulkan"
-mappings = "mojmap"
-tier = 2
-
-[[version]]
-mc = "26.2.1"   # NOT in Mojang manifest as of 2026-09-29; confirm the intended version id
-adapter = "v26_x"
-java = 25
-loader = "fabric"
-renderer = "vulkan"
+renderer = "gl"
 mappings = "mojmap"
 tier = 2
 
 [[version]]
 mc = "26.3"
-adapter = "v26_x"
+adapter = "v26_3"
 java = 25
 loader = "fabric"
-renderer = "vulkan"
+renderer = "gl"
 mappings = "mojmap"
 tier = 1

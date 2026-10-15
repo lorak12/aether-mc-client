@@ -1,7 +1,8 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import "@fontsource-variable/inter";
-import "@fontsource-variable/sora";
+import "@fontsource-variable/figtree";
+import "@fontsource/space-mono/400.css";
+import "@fontsource/space-mono/700.css";
 import "./tokens.css";
 import "./styles.css";
 import { App } from "./App";

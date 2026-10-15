@@ -20,6 +20,8 @@ public final class EventBus {
 
     private final Map<Class<?>, List<Entry>> handlers = new HashMap<Class<?>, List<Entry>>();
     private final List<String> errors = new ArrayList<String>();
+    /** Events posted per type since start, for the developer page. */
+    private final Map<String, Long> counts = new java.util.TreeMap<String, Long>();
 
     /** Lower priority value runs first. */
     @SuppressWarnings("unchecked")
@@ -46,6 +48,9 @@ public final class EventBus {
     public void post(Object event) {
         List<Entry> snapshot;
         synchronized (this) {
+            String n = event.getClass().getSimpleName();
+            Long c = counts.get(n);
+            counts.put(n, c == null ? 1L : c + 1);
             List<Entry> l = handlers.get(event.getClass());
             if (l == null) return;
             snapshot = new ArrayList<Entry>(l);
@@ -60,4 +65,13 @@ public final class EventBus {
     }
 
     public synchronized List<String> errors() { return new ArrayList<String>(errors); }
+
+    public synchronized Map<String, Long> counts() { return new java.util.TreeMap<String, Long>(counts); }
+
+    /** Number of handlers registered for each event type. */
+    public synchronized Map<String, Integer> listeners() {
+        Map<String, Integer> out = new java.util.TreeMap<String, Integer>();
+        for (Map.Entry<Class<?>, List<Entry>> e : handlers.entrySet()) if (!e.getValue().isEmpty()) out.put(e.getKey().getSimpleName(), e.getValue().size());
+        return out;
+    }
 }

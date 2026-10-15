@@ -1,0 +1,48 @@
+{
+  "id": "wings-dragon",
+  "name": "Dragon Wings",
+  "description": "Leathery wings with bone struts; slow, heavy beats.",
+  "slot": "wings",
+  "rarity": "legendary",
+  "textureSize": [64, 64],
+  "parts": [
+    {
+      "bone": "body",
+      "pivot": [-1.5, 2, 2.4],
+      "rotation": [0, 30, 18],
+      "mirror": true,
+      "animate": {
+        "rot": [0, 22, 6],
+        "speed": 0.07,
+        "flySpeed": 3.5,
+        "flyAmp": 1.6
+      },
+      "cubes": [
+        {
+          "from": [-18, -1, 0.4],
+          "size": [18, 22, 0],
+          "uv": [0, 0]
+        },
+        {
+          "from": [-11, -1.5, -0.1],
+          "size": [11, 1, 1],
+          "uv": [36, 0]
+        }
+      ],
+      "children": [
+        {
+          "pivot": [-11, -1, 0.4],
+          "rotation": [0, 0, 35],
+          "cubes": [
+            {
+              "from": [-1, -2.5, -0.5],
+              "size": [1, 2, 1],
+              "uv": [60, 0]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "iconImage": "icon.png"
+}

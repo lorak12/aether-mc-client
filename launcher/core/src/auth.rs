@@ -86,6 +86,60 @@ pub async fn poll_device_login(client: &reqwest::Client, client_id: &str, code: 
     }
 }
 
+const AUTHORIZE_URL: &str = "https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize";
+
+/// PKCE S256 challenge for a verifier (RFC 7636).
+pub fn pkce_challenge(verifier: &str) -> String {
+    use base64::Engine;
+    use sha2::Digest;
+    base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(sha2::Sha256::digest(verifier.as_bytes()))
+}
+
+/// The Microsoft sign-in page for the browser flow (email/password, passkeys, 2FA all happen there).
+pub fn authorize_url(client_id: &str, redirect_uri: &str, verifier: &str, state: &str) -> String {
+    let mut u = reqwest::Url::parse(AUTHORIZE_URL).expect("static url");
+    u.query_pairs_mut()
+        .append_pair("client_id", client_id)
+        .append_pair("response_type", "code")
+        .append_pair("redirect_uri", redirect_uri)
+        .append_pair("response_mode", "query")
+        .append_pair("scope", SCOPE)
+        .append_pair("state", state)
+        .append_pair("code_challenge", &pkce_challenge(verifier))
+        .append_pair("code_challenge_method", "S256")
+        .append_pair("prompt", "select_account");
+    u.to_string()
+}
+
+/// Exchange the code from the browser redirect for tokens.
+pub async fn exchange_code(client: &reqwest::Client, client_id: &str, code: &str, redirect_uri: &str, verifier: &str) -> Result<MsTokens> {
+    let r = client
+        .post(TOKEN_URL)
+        .form(&[
+            ("grant_type", "authorization_code"),
+            ("client_id", client_id),
+            ("code", code),
+            ("redirect_uri", redirect_uri),
+            ("code_verifier", verifier),
+            ("scope", SCOPE),
+        ])
+        .send()
+        .await?;
+    if !r.status().is_success() {
+        let v: serde_json::Value = r.json().await.unwrap_or_default();
+        let desc = v["error_description"].as_str().unwrap_or("unknown error");
+        if desc.contains("AADSTS50011") || desc.contains("AADSTS500113") {
+            return Err(Error::Auth(
+                "Your Azure app has no redirect for browser sign-in. In the Azure portal open the app registration > Authentication > \
+                 Add a platform > Mobile and desktop applications, add http://localhost and save."
+                    .into(),
+            ));
+        }
+        return Err(Error::Auth(azure_error_message(desc)));
+    }
+    Ok(r.json().await?)
+}
+
 pub async fn refresh(client: &reqwest::Client, client_id: &str, refresh_token: &str) -> Result<MsTokens> {
     let r = client
         .post(TOKEN_URL)
@@ -224,8 +278,94 @@ mod tests {
     }
 
     #[test]
+    fn pkce_and_authorize_url() {
+        // RFC 7636 appendix B.
+        assert_eq!(pkce_challenge("dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"), "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM");
+        let u = authorize_url("cid", "http://localhost:5000", "v", "st");
+        assert!(u.contains("client_id=cid") && u.contains("code_challenge_method=S256") && u.contains("redirect_uri=http%3A%2F%2Flocalhost%3A5000"));
+    }
+
+    #[test]
     fn azure_errors_are_actionable() {
         assert!(azure_error_message("AADSTS70002: The provided client is not supported").contains("Allow public client flows"));
         assert!(azure_error_message("AADSTS999: odd").starts_with("Microsoft sign-in failed"));
+    }
+}
+
+/// Development-only session for testing the client before the Azure app is approved for Minecraft services.
+/// The token is a placeholder, so it only joins offline-mode servers and singleplayer.
+pub fn offline_session(username: &str) -> Result<Session> {
+    let name = username.trim();
+    if name.is_empty() || name.len() > 16 || !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+        return Err(Error::Auth("Offline name must be 1-16 letters, digits or underscores".into()));
+    }
+    use sha1::{Digest, Sha1};
+    let mut b: [u8; 16] = Sha1::digest(format!("OfflinePlayer:{name}").as_bytes())[..16].try_into().unwrap();
+    b[6] = (b[6] & 0x0f) | 0x30;
+    b[8] = (b[8] & 0x3f) | 0x80;
+    Ok(Session { username: name.to_string(), uuid: hex::encode(b), access_token: "0".into() })
+}
+
+/// A player's current skin texture URL (https), from Mojang's session server. `None` when the uuid has no Mojang profile
+/// (offline accounts) or the profile has no custom skin.
+pub async fn skin_url(client: &reqwest::Client, uuid: &str) -> Result<Option<String>> {
+    let id: String = uuid.chars().filter(|c| c.is_ascii_hexdigit()).collect::<String>().to_ascii_lowercase();
+    if id.len() != 32 {
+        return Ok(None);
+    }
+    let r = client
+        .get(format!("https://sessionserver.mojang.com/session/minecraft/profile/{id}"))
+        .timeout(Duration::from_secs(10))
+        .send()
+        .await?;
+    // 204 / 404: no such profile.
+    if r.status() == reqwest::StatusCode::NO_CONTENT || r.status() == reqwest::StatusCode::NOT_FOUND {
+        return Ok(None);
+    }
+    let profile: serde_json::Value = r.error_for_status()?.json().await?;
+    Ok(skin_from_profile(&profile))
+}
+
+/// The SKIN url inside a session-server profile's base64 `textures` property, upgraded to https (the launcher's CSP
+/// only allows https images; textures.minecraft.net serves both).
+pub fn skin_from_profile(profile: &serde_json::Value) -> Option<String> {
+    use base64::Engine;
+    let value = profile["properties"].as_array()?.iter().find(|p| p["name"] == "textures")?["value"].as_str()?;
+    let decoded = base64::engine::general_purpose::STANDARD.decode(value).ok()?;
+    let textures: serde_json::Value = serde_json::from_slice(&decoded).ok()?;
+    let url = textures["textures"]["SKIN"]["url"].as_str()?;
+    Some(url.strip_prefix("http://").map(|rest| format!("https://{rest}")).unwrap_or_else(|| url.to_string()))
+}
+
+#[cfg(test)]
+mod skin_tests {
+    use super::*;
+    use base64::Engine;
+
+    #[test]
+    fn reads_the_skin_url_and_upgrades_it_to_https() {
+        let textures = r#"{"profileId":"x","textures":{"SKIN":{"url":"http://textures.minecraft.net/texture/abc"}}}"#;
+        let profile = json!({ "id": "x", "properties": [{ "name": "textures", "value": base64::engine::general_purpose::STANDARD.encode(textures) }] });
+        assert_eq!(skin_from_profile(&profile).as_deref(), Some("https://textures.minecraft.net/texture/abc"));
+        assert_eq!(skin_from_profile(&json!({ "properties": [] })), None);
+        let no_skin = json!({ "properties": [{ "name": "textures", "value": base64::engine::general_purpose::STANDARD.encode(r#"{"textures":{}}"#) }] });
+        assert_eq!(skin_from_profile(&no_skin), None);
+    }
+}
+
+#[cfg(test)]
+mod offline_tests {
+    use super::*;
+
+    #[test]
+    fn offline_session_is_stable_and_validated() {
+        let a = offline_session("Steve_Dev").unwrap();
+        assert_eq!(a.uuid.len(), 32);
+        // The backend's dev offline sign-in computes the same uuid (backend/src/app.ts offlineUuid).
+        assert_eq!(a.uuid, "d39f581a49753f5e978a4d0237751c56");
+        assert_eq!(a.uuid, offline_session(" Steve_Dev ").unwrap().uuid);
+        assert!(offline_session("").is_err());
+        assert!(offline_session("bad name!").is_err());
+        assert!(offline_session("waytoolongusername1").is_err());
     }
 }

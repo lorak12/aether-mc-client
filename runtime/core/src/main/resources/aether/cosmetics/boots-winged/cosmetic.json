@@ -1,0 +1,42 @@
+{
+  "id": "boots-winged",
+  "name": "Winged Boots",
+  "description": "White leather boots with little wings that flap as you run.",
+  "slot": "boots",
+  "rarity": "epic",
+  "textureSize": [64, 32],
+  "parts": [
+    {
+      "bone": "right_leg",
+      "pivot": [0, 0, 0],
+      "mirror": true,
+      "cubes": [
+        {
+          "from": [-2, 8, -2],
+          "size": [4, 4, 4],
+          "uv": [0, 0],
+          "inflate": 0.4
+        }
+      ],
+      "children": [
+        {
+          "pivot": [-2.5, 9, 1],
+          "rotation": [0, 30, 15],
+          "animate": {
+            "rot": [0, 16, 0],
+            "speed": 0.25,
+            "walkAmp": 1.5
+          },
+          "cubes": [
+            {
+              "from": [-6, -4, 0],
+              "size": [6, 5, 0],
+              "uv": [16, 0]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "iconImage": "icon.png"
+}

@@ -1,9 +1,10 @@
 //! Profiles: isolated game directories with their own version, loader, JVM settings and content lock.
+use crate::settings::{overrides_from_legacy, Overrides};
 use crate::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
-pub const PROFILE_FORMAT: u32 = 1;
+pub const PROFILE_FORMAT: u32 = 2;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -28,6 +29,31 @@ impl Loader {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum ProfileKind {
+    /// Runs the Aether client (Fabric/Quilt on a supported version).
+    #[default]
+    Client,
+    Vanilla,
+    Modpack,
+}
+
+/// Display data and stats the launcher keeps with the profile.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct ProfileMeta {
+    pub kind: ProfileKind,
+    pub description: String,
+    /// A CSS background (gradient), or `file:<name>` for an image in the profile folder.
+    pub cover: Option<String>,
+    /// Client profiles only: load just the Aether client, not the other jars in `mods/`.
+    pub builtin_only: bool,
+    /// Unix milliseconds.
+    pub last_played: Option<u64>,
+    pub plays: u32,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Profile {
     #[serde(default = "one")]
@@ -36,23 +62,50 @@ pub struct Profile {
     pub name: String,
     pub mc_version: String,
     pub loader: Loader,
-    #[serde(default = "default_mem")]
-    pub memory_mb: u32,
+    /// Pinned loader version; `None` = newest stable at launch.
     #[serde(default)]
-    pub jvm_args: Vec<String>,
+    pub loader_version: Option<String>,
     #[serde(default)]
     pub created_unix: u64,
+    /// Folder the game runs in, when not the profile's own folder.
+    #[serde(default)]
+    pub game_dir: Option<String>,
+    #[serde(default)]
+    pub overrides: Overrides,
+    #[serde(default)]
+    pub meta: ProfileMeta,
+    /// The profile's folder, filled in when loaded (not stored).
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub dir: String,
+    /// Format 1 kept resolved memory/JVM values on the profile; read once to migrate them into `overrides`.
+    #[serde(default, skip_serializing)]
+    memory_mb: Option<u32>,
+    #[serde(default, skip_serializing)]
+    jvm_args: Option<Vec<String>>,
 }
 
 fn one() -> u32 {
-    PROFILE_FORMAT
+    1
 }
-fn default_mem() -> u32 {
-    4096
+
+impl Profile {
+    fn migrate(&mut self) -> bool {
+        if self.format >= PROFILE_FORMAT {
+            return false;
+        }
+        if self.format < 2 {
+            self.overrides = overrides_from_legacy(self.memory_mb, self.jvm_args.as_deref().unwrap_or_default());
+            self.meta.kind = if self.loader == Loader::Vanilla { ProfileKind::Vanilla } else { ProfileKind::Client };
+        }
+        self.memory_mb = None;
+        self.jvm_args = None;
+        self.format = PROFILE_FORMAT;
+        true
+    }
 }
 
 /// Subdirectories created for every profile.
-pub const SUBDIRS: &[&str] = &["mods", "resourcepacks", "shaderpacks", "saves", "config"];
+pub const SUBDIRS: &[&str] = &["mods", "resourcepacks", "shaderpacks", "saves", "config", "screenshots"];
 
 pub struct ProfileStore {
     root: PathBuf,
@@ -90,23 +143,27 @@ impl ProfileStore {
             id = format!("{base}-{n}");
             n += 1;
         }
-        let profile = Profile {
+        let created_unix = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
+        let mut profile = Profile {
             format: PROFILE_FORMAT,
             id: id.clone(),
             name: name.to_string(),
             mc_version: mc_version.to_string(),
             loader,
-            memory_mb: default_mem(),
-            jvm_args: vec![],
-            created_unix: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .map(|d| d.as_secs())
-                .unwrap_or(0),
+            loader_version: None,
+            created_unix,
+            game_dir: None,
+            overrides: Overrides::default(),
+            meta: ProfileMeta { kind: if loader == Loader::Vanilla { ProfileKind::Vanilla } else { ProfileKind::Client }, ..Default::default() },
+            dir: String::new(),
+            memory_mb: None,
+            jvm_args: None,
         };
         for d in SUBDIRS {
             std::fs::create_dir_all(self.dir(&id).join(d))?;
         }
         self.save(&profile)?;
+        profile.dir = self.dir(&id).display().to_string();
         Ok(profile)
     }
 
@@ -115,29 +172,52 @@ impl ProfileStore {
             return Err(Error::Other("invalid profile id".into()));
         }
         std::fs::create_dir_all(self.dir(&p.id))?;
-        std::fs::write(self.dir(&p.id).join("profile.json"), serde_json::to_vec_pretty(p)?)?;
+        let stored = Profile { dir: String::new(), ..p.clone() };
+        // Write then rename so a crash mid-write never leaves a half profile.json.
+        let path = self.dir(&p.id).join("profile.json");
+        let tmp = path.with_extension("json.tmp");
+        std::fs::write(&tmp, serde_json::to_vec_pretty(&stored)?)?;
+        std::fs::rename(tmp, path)?;
         Ok(())
+    }
+
+    fn read(&self, id: &str) -> Result<Profile> {
+        let mut p: Profile = serde_json::from_slice(&std::fs::read(self.dir(id).join("profile.json"))?)?;
+        if p.migrate() {
+            self.save(&p)?;
+        }
+        p.dir = self.dir(id).display().to_string();
+        Ok(p)
     }
 
     pub fn load(&self, id: &str) -> Result<Profile> {
         if !Self::valid_id(id) {
             return Err(Error::Other("invalid profile id".into()));
         }
-        Ok(serde_json::from_slice(&std::fs::read(self.dir(id).join("profile.json"))?)?)
+        self.read(id)
     }
 
     pub fn list(&self) -> Result<Vec<Profile>> {
         let mut out = Vec::new();
         let Ok(rd) = std::fs::read_dir(&self.root) else { return Ok(out) };
         for e in rd.flatten() {
-            if let Ok(b) = std::fs::read(e.path().join("profile.json")) {
-                if let Ok(p) = serde_json::from_slice::<Profile>(&b) {
+            let Some(id) = e.file_name().to_str().map(String::from) else { continue };
+            if Self::valid_id(&id) {
+                if let Ok(p) = self.read(&id) {
                     out.push(p);
                 }
             }
         }
         out.sort_by_key(|p| p.created_unix);
         Ok(out)
+    }
+
+    /// Where the game runs and content lives: the custom folder if one is set, the profile folder otherwise.
+    pub fn game_dir(&self, p: &Profile) -> PathBuf {
+        match p.game_dir.as_deref().map(str::trim).filter(|d| !d.is_empty()) {
+            Some(d) if Path::new(d).is_absolute() => PathBuf::from(d),
+            _ => self.dir(&p.id),
+        }
     }
 
     pub fn delete(&self, id: &str) -> Result<()> {
@@ -152,15 +232,24 @@ impl ProfileStore {
     pub fn duplicate(&self, id: &str) -> Result<Profile> {
         let src = self.load(id)?;
         let mut copy = self.create(&format!("{} copy", src.name), &src.mc_version, src.loader)?;
-        copy.memory_mb = src.memory_mb;
-        copy.jvm_args = src.jvm_args.clone();
+        copy.loader_version = src.loader_version.clone();
+        copy.overrides = src.overrides.clone();
+        copy.meta = ProfileMeta { last_played: None, plays: 0, ..src.meta.clone() };
         self.save(&copy)?;
+        let from = self.game_dir(&src);
         for d in ["mods", "resourcepacks", "shaderpacks", "config"] {
-            copy_dir(&self.dir(id).join(d), &self.dir(&copy.id).join(d))?;
+            copy_dir(&from.join(d), &self.dir(&copy.id).join(d))?;
         }
-        let lock = self.dir(id).join("content.lock.json");
-        if lock.exists() {
-            std::fs::copy(lock, self.dir(&copy.id).join("content.lock.json"))?;
+        for f in ["content.lock.json", "options.txt", "servers.dat"] {
+            if from.join(f).exists() {
+                std::fs::copy(from.join(f), self.dir(&copy.id).join(f))?;
+            }
+        }
+        for e in std::fs::read_dir(self.dir(id))?.flatten() {
+            let name = e.file_name().to_string_lossy().to_string();
+            if name.starts_with("cover") {
+                std::fs::copy(e.path(), self.dir(&copy.id).join(&name))?;
+            }
         }
         Ok(copy)
     }
@@ -178,6 +267,13 @@ fn copy_dir(from: &Path, to: &Path) -> Result<()> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+impl ProfileStore {
+    fn create_unsaved_for_test(&self, id: &str) -> Profile {
+        serde_json::from_str(&format!(r#"{{"format":2,"id":"{id}","name":"x","mc_version":"1.21.11","loader":"fabric"}}"#)).unwrap()
+    }
 }
 
 #[cfg(test)]
@@ -203,6 +299,7 @@ mod tests {
         let a = s.create("PvP", "1.8.9", Loader::Vanilla).unwrap();
         let b = s.create("PvP", "1.21.11", Loader::Fabric).unwrap();
         assert_eq!(a.id, "pvp");
+        assert_eq!(a.meta.kind, ProfileKind::Vanilla);
         assert_eq!(b.id, "pvp-2");
         assert!(s.dir("pvp").join("mods").is_dir());
         assert_eq!(s.list().unwrap().len(), 2);
@@ -211,6 +308,38 @@ mod tests {
         s.delete("pvp").unwrap();
         assert_eq!(s.list().unwrap().len(), 2);
         let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn migrates_format_1() {
+        let root = tmp("mig");
+        let s = ProfileStore::new(&root);
+        std::fs::create_dir_all(s.dir("old")).unwrap();
+        std::fs::write(
+            s.dir("old").join("profile.json"),
+            r#"{"format":1,"id":"old","name":"Old","mc_version":"1.21.11","loader":"fabric","memory_mb":6144,"jvm_args":["-XX:+UseZGC"],"created_unix":5}"#,
+        )
+        .unwrap();
+        let p = s.load("old").unwrap();
+        assert_eq!(p.format, PROFILE_FORMAT);
+        assert_eq!(p.overrides.memory_mb.as_ref().unwrap().value, 6144);
+        assert_eq!(p.meta.kind, ProfileKind::Client);
+        assert!(p.dir.ends_with("old"));
+        let raw = std::fs::read_to_string(s.dir("old").join("profile.json")).unwrap();
+        assert!(raw.contains("\"format\": 2") && !raw.contains("memory_mb") && !raw.contains("\"dir\""));
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
+    #[test]
+    fn custom_game_dir_must_be_absolute() {
+        let s = ProfileStore::new(Path::new("/data"));
+        let mut p = s.create_unsaved_for_test("x");
+        assert_eq!(s.game_dir(&p), s.dir("x"));
+        p.game_dir = Some("relative/dir".into());
+        assert_eq!(s.game_dir(&p), s.dir("x"));
+        let abs = std::env::temp_dir().join("aether-custom");
+        p.game_dir = Some(abs.display().to_string());
+        assert_eq!(s.game_dir(&p), abs);
     }
 
     #[test]

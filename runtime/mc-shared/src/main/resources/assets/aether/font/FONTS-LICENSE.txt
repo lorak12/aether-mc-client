@@ -1,0 +1,5 @@
+inter-medium.ttf: Inter, Copyright (c) 2016 The Inter Project Authors (https://github.com/rsms/inter)
+sora-bold.ttf: Sora, Copyright 2019 The Sora Project Authors (https://github.com/sora-xor/sora-font)
+
+Both are licensed under the SIL Open Font License, Version 1.1: https://openfontlicense.org
+Files are the Latin subsets from Fontsource (https://fontsource.org). Loaded by gg.aether.mc.McFonts.

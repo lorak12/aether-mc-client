@@ -10,3 +10,15 @@ aether.config.json
 runtime/build/
 runtime/.gradle/
 runtime/*/build/
+runtime/*/bin/
+runtime/**/build/
+runtime/*/run/
+runtime/**/.gradle/
+runtime/**/run/
+.impeccable/questions/*.log
+*.hprof
+*.db
+*.db-shm
+*.db-wal
+
+backend/seed/local/

@@ -8,20 +8,20 @@ Aether is a personal project exploring a custom Minecraft launcher and client. T
 
 - **Launcher:** A Rust and Tauri desktop app for accounts, profiles, game setup, launching, and modpack management.
 - **Backend:** A TypeScript service for verified sign-in and supporting features such as cosmetics metadata and signed runtime manifests.
-- **Runtime:** A Java-based client foundation with a mod API, settings, HUD layout, and an initial set of HUD mods.
+- **Runtime:** A Java client with a mod API, 30 mods, an in-game mod menu and HUD editor (Right Shift), and Fabric adapters for 1.21.11, 26.2 and 26.3.
 
-Core launcher and backend workflows have tests, but major client features are still unfinished. In particular, in-game rendering and hooks, many client modules, and the integration of cosmetics and badges are not implemented yet. See [docs/STATUS.md](docs/STATUS.md) for current capabilities, setup details, and known gaps.
+Core launcher and backend workflows have tests, but major client features are still unfinished. The client runs in-game on Fabric 1.21.11 and 26.3. Other versions, many client modules, and cosmetics and badges are not implemented yet. See [docs/STATUS.md](docs/STATUS.md) for current capabilities, setup details, and known gaps.
 
 ## Development Checks
 
 Run these from the repository root or the indicated directory:
 
-| Area | Command |
-| --- | --- |
-| Rust workspace | `cargo test --workspace` |
-| Backend | `cd backend` then `npm install` and `npm test` |
-| Runtime (Windows) | `cd runtime` then `./gradlew.bat test` |
-| Runtime (macOS/Linux) | `cd runtime` then `./gradlew test` |
+| Area                  | Command                                        |
+| --------------------- | ---------------------------------------------- |
+| Rust workspace        | `cargo test --workspace`                       |
+| Backend               | `cd backend` then `npm install` and `npm test` |
+| Runtime (Windows)     | `cd runtime` then `./gradlew.bat test`         |
+| Runtime (macOS/Linux) | `cd runtime` then `./gradlew test`             |
 
 ## Project Notes
 

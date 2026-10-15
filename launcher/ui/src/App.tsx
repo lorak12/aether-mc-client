@@ -1,155 +1,82 @@
-import { ReactNode, useCallback, useEffect, useState } from "react";
-import { WindowControls } from "./WindowControls";
-import { IconContent, IconHome, IconProfiles, IconSettings } from "./Icons";
-import { listen } from "@tauri-apps/api/event";
-import { api, ConfigStatus, errText, GameExit, LaunchProgress, Profile } from "./api";
-import { Profiles } from "./pages/Profiles";
-import { Browse } from "./pages/Browse";
-import { Settings } from "./pages/Settings";
-import { Home, LaunchState } from "./pages/Home";
-
-type Page = "home" | "profiles" | "browse" | "settings";
-
-const NAV: { id: Page; label: string; icon: ReactNode }[] = [
-  { id: "home", label: "Home", icon: <IconHome /> },
-  { id: "profiles", label: "Profiles", icon: <IconProfiles /> },
-  { id: "browse", label: "Content", icon: <IconContent /> },
-  { id: "settings", label: "Settings", icon: <IconSettings /> },
-];
+import { useEffect } from "react";
+import { AppProvider, useApp } from "./app/store";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { CommunityPage } from "./pages/community/Community";
+import { ContentPage } from "./pages/content/Content";
+import { ProjectPage } from "./pages/content/ProjectPage";
+import { ExplorePage } from "./pages/explore/Explore";
+import { Home } from "./pages/home/Home";
+import { ArticlePage, NewsPage } from "./pages/news/News";
+import { NewProfileModal } from "./pages/profiles/NewProfileModal";
+import { ProfilesPage } from "./pages/profiles/Profiles";
+import { SettingsPage } from "./pages/settings";
+import { CoinShop } from "./pages/store/CoinShop";
+import { StorePage } from "./pages/store/Store";
+import { LogsWindow } from "./shell/LogsWindow";
+import { FriendsPanel } from "./shell/RightSidebar";
+import { SearchOverlay } from "./shell/SearchOverlay";
+import { Sidebar } from "./shell/Sidebar";
+import { Toasts } from "./shell/Toasts";
+import { TopBar } from "./shell/TopBar";
 
 export function App() {
-  const [page, setPage] = useState<Page>("home");
-  const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [selected, setSelected] = useState<string | null>(null);
-  const [cfg, setCfg] = useState<ConfigStatus | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  // The live log window loads the same bundle with ?view=logs.
+  if (new URLSearchParams(location.search).get("view") === "logs") return <LogsWindow />;
+  return (
+    <ErrorBoundary>
+      <AppProvider>
+        <Shell />
+      </AppProvider>
+    </ErrorBoundary>
+  );
+}
 
-  const notify = useCallback((m: string) => {
-    setToast(m);
-    // Long messages (sign-in instructions) need time to read.
-    setTimeout(() => setToast((t) => (t === m ? null : t)), Math.max(4000, m.length * 70));
-  }, []);
+function Shell() {
+  const app = useApp();
+  const r = app.route;
 
-  const refresh = useCallback(async () => {
-    try {
-      const list = await api.listProfiles();
-      setProfiles(list);
-      setSelected((s) => (s && list.some((p) => p.id === s) ? s : list[0]?.id ?? null));
-    } catch (e) {
-      notify(errText(e));
-    }
-  }, [notify]);
-
+  // Mouse back/forward buttons.
   useEffect(() => {
-    refresh();
-    api.configStatus().then(setCfg).catch(() => {});
-  }, [refresh]);
-
-  // undefined = still loading, null = signed out, string = signed in (may be "" until the name is cached)
-  const [account, setAccount] = useState<string | null | undefined>(undefined);
-  useEffect(() => {
-    api.accountName().then(setAccount).catch(() => setAccount(null));
-  }, [page]);
-
-  const [launch, setLaunch] = useState<LaunchState>({ phase: "idle" });
-  useEffect(() => {
-    api.runningProfile().then((id) => id && setLaunch({ phase: "running", profileId: id })).catch(() => {});
-    const unProgress = listen<LaunchProgress>("launch-progress", ({ payload }) =>
-      setLaunch((l) => {
-        if (l.phase !== "preparing") return l;
-        return payload.stage === "running" ? { phase: "running", profileId: l.profileId } : { ...l, progress: payload };
-      }),
-    );
-    const unExit = listen<GameExit>("game-exit", ({ payload }) =>
-      setLaunch(payload.code === 0 ? { phase: "idle" } : { phase: "crashed", code: payload.code, log: payload.log_tail ?? "" }),
-    );
-    return () => {
-      unProgress.then((f) => f());
-      unExit.then((f) => f());
+    const h = (e: MouseEvent) => {
+      if (e.button === 3) (e.preventDefault(), app.back());
+      if (e.button === 4) (e.preventDefault(), app.forward());
     };
-  }, []);
+    window.addEventListener("mouseup", h);
+    return () => window.removeEventListener("mouseup", h);
+  }, [app.back, app.forward]);
 
-  const play = async () => {
-    if (!selected) return;
-    setLaunch({ phase: "preparing", profileId: selected, progress: null });
-    try {
-      const name = await api.launch(selected);
-      setAccount(name);
-      // If the game already exited (instant crash), game-exit has set the final state.
-      setLaunch((l) => (l.phase === "preparing" ? { phase: "running", profileId: l.profileId } : l));
-    } catch (e) {
-      setLaunch({ phase: "idle" });
-      notify(errText(e));
-    }
-  };
-
-  const current = profiles.find((p) => p.id === selected) ?? null;
-
-  const status = launch.phase === "running" ? "Playing" : launch.phase === "preparing" ? "Preparing" : "Ready";
+  const classes = ["shell", app.prefs.sidebarCollapsed && "side-collapsed", app.prefs.reduceMotion && "reduce-motion"].filter(Boolean).join(" ");
+  const right = (r.page === "home" && app.prefs.showFriendsOnHome) || r.page === "community";
 
   return (
-    <div className="shell">
+    <div className={classes}>
       <div className="aurora" aria-hidden />
-      <aside className="rail">
-        <div className="logo" title="Aether" />
-        <nav>
-          {NAV.map((n) => (
-            <button key={n.id} className={page === n.id ? "nav active" : "nav"} onClick={() => setPage(n.id)} aria-label={n.label}>
-              {n.icon}
-              <span className="nav-label">{n.label}</span>
-            </button>
-          ))}
-        </nav>
-        <div className={`status-dot ${launch.phase}`} title={status} />
-      </aside>
-      <div className="main">
-        <header className="topbar" data-tauri-drag-region>
-          <div className="crumb" data-tauri-drag-region>
-            <span className="brand">Aether</span>
-            <span className="sep">/</span>
-            <span>{NAV.find((n) => n.id === page)!.label}</span>
+      <TopBar />
+      <div className="body">
+        <Sidebar />
+        <main className={right ? "main with-right" : "main"} key={r.page + ("id" in r ? r.id : "")}>
+          <div className="main-scroll">
+            <ErrorBoundary key={r.page}>
+            {r.page === "home" && <Home />}
+            {r.page === "profiles" && <ProfilesPage open={r.open} />}
+            {r.page === "content" && <ContentPage kind={r.kind} q={r.q} />}
+            {r.page === "project" && <ProjectPage id={r.id} kind={r.kind} provider={r.provider} />}
+            {r.page === "explore" && <ExplorePage />}
+            {r.page === "community" && <CommunityPage tab={r.tab} friend={r.friend} />}
+            {r.page === "news" && <NewsPage />}
+            {r.page === "article" && <ArticlePage id={r.id} />}
+            {r.page === "store" && <StorePage tab={r.tab} />}
+            {r.page === "coins" && <CoinShop />}
+            {r.page === "settings" && <SettingsPage tab={r.tab} />}
+            </ErrorBoundary>
           </div>
-          <div className="topbar-right">
-            <label className="picker">
-              <span className="muted small">Profile</span>
-              <select value={selected ?? ""} onChange={(e) => setSelected(e.target.value)}>
-                {profiles.length === 0 && <option value="">No profiles</option>}
-                {profiles.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button className="account-chip" onClick={() => setPage("settings")} title={typeof account === "string" ? "Account" : "Sign in"}>
-              <span className={typeof account === "string" ? "avatar on" : "avatar"}>{typeof account === "string" && account ? account[0].toUpperCase() : "?"}</span>
-              <span>{typeof account === "string" ? account || "Signed in" : account === null ? "Sign in" : "…"}</span>
-            </button>
-            <WindowControls />
-          </div>
-        </header>
-        <main className={page === "home" ? "content flush" : "content"} key={page}>
-          {page === "home" && (
-          <Home
-            profile={current}
-            cfg={cfg}
-            account={account}
-            launch={launch}
-            play={play}
-            dismiss={() => setLaunch({ phase: "idle" })}
-            go={setPage}
-            profiles={profiles}
-            select={setSelected}
-          />
-        )}
-        {page === "profiles" && (
-          <Profiles profiles={profiles} selected={selected} select={setSelected} refresh={refresh} notify={notify} />
-        )}
-        {page === "browse" && <Browse profile={current} notify={notify} refresh={refresh} />}
-        {page === "settings" && <Settings cfg={cfg} notify={notify} />}
+          {r.page === "home" && right && <FriendsPanel />}
+          {r.page === "community" && <FriendsPanel selected={r.friend} onOpen={(f) => app.replace({ page: "community", tab: "messages", friend: f.id })} />}
         </main>
       </div>
-      {toast && <div className="toast">{toast}</div>}
+      <SearchOverlay />
+      <NewProfileModal />
+      <Toasts />
     </div>
   );
 }

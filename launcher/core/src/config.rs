@@ -7,7 +7,8 @@ use crate::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-pub const USER_AGENT: &str = concat!("aether-launcher/", env!("CARGO_PKG_VERSION"), " (contact: set-in-config)");
+/// Modrinth asks for a User-Agent that identifies the project and how to reach its maintainers.
+pub const USER_AGENT: &str = concat!("lorak12/aether-mc-client/", env!("CARGO_PKG_VERSION"), " (https://github.com/lorak12/aether-mc-client)");
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AppConfig {
@@ -82,6 +83,8 @@ impl AppConfig {
             login: self.azure_client_id.is_some(),
             curseforge: self.curseforge_api_key.is_some(),
             backend: self.backend_url.is_some(),
+            backend_url: self.backend_url.as_ref().map(|u| u.trim_end_matches('/').to_string()),
+            updates: self.backend_url.is_some() && self.manifest_public_key.is_some(),
         }
     }
 }
@@ -91,6 +94,10 @@ pub struct ConfigStatus {
     pub login: bool,
     pub curseforge: bool,
     pub backend: bool,
+    /// For images the backend serves (store art).
+    pub backend_url: Option<String>,
+    /// Update checks work (backend and manifest key set).
+    pub updates: bool,
 }
 
 #[cfg(test)]

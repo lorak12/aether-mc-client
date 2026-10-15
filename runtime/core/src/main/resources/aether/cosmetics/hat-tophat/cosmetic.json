@@ -1,0 +1,34 @@
+{
+  "id": "hat-tophat",
+  "name": "Top Hat",
+  "description": "A tall felt top hat with a violet band, worn at an angle.",
+  "slot": "hat",
+  "rarity": "rare",
+  "textureSize": [64, 32],
+  "parts": [
+    {
+      "bone": "head",
+      "pivot": [0, -8.5, 0],
+      "rotation": [0, 0, -6],
+      "cubes": [
+        {
+          "from": [-5.5, -1, -5.5],
+          "size": [11, 1, 11],
+          "uv": [0, 0]
+        },
+        {
+          "from": [-4, -9, -4],
+          "size": [8, 8, 8],
+          "uv": [0, 12]
+        },
+        {
+          "from": [-4, -3, -4],
+          "size": [8, 2, 8],
+          "uv": [32, 12],
+          "inflate": 0.15
+        }
+      ]
+    }
+  ],
+  "iconImage": "icon.png"
+}

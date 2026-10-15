@@ -32,6 +32,18 @@ class CoreTest {
     }
 
     @Test
+    void itemPhysicsPilesMoreLayersForBiggerStacks() {
+        assertEquals(1, Overrides.itemLayers(1));
+        assertEquals(1, Overrides.itemLayers(8));
+        assertEquals(2, Overrides.itemLayers(9));
+        assertEquals(2, Overrides.itemLayers(32));
+        assertEquals(3, Overrides.itemLayers(33));
+        assertEquals(3, Overrides.itemLayers(48));
+        assertEquals(4, Overrides.itemLayers(64));
+        assertEquals(5, Overrides.itemLayers(99));
+    }
+
+    @Test
     void jsonRoundTripAndErrors() {
         Map<String, Object> m = Json.parseObject("{\"a\": [1, 2.5, true, null, \"x\\n\\u0041\"], \"b\": {}}");
         assertEquals(Arrays.<Object>asList(1L, 2.5, true, null, "x\nA"), m.get("a"));
@@ -182,10 +194,19 @@ class CoreTest {
         assertEquals(1.5f, m2.hud().scale());
         assertTrue(b.competitiveMode());
 
+        // A corrupt config is set aside; the profile files still hold the mods.
         Files.write(file, "{ not json".getBytes(StandardCharsets.UTF_8));
         ModManager c = new ModManager();
-        c.register(new TestMod("m", true));
-        assertFalse(new ConfigStore(file).load(c));
+        TestMod m3 = new TestMod("m", true);
+        c.register(m3);
+        assertTrue(new ConfigStore(file).load(c));
         assertTrue(Files.exists(dir.resolve("cfg").resolve("mods.json.corrupt")));
+        assertTrue(m3.enabled());
+        assertEquals(8, m3.size.val());
+
+        // Nothing at all: defaults stay.
+        ModManager d = new ModManager();
+        d.register(new TestMod("m", true));
+        assertFalse(new ConfigStore(dir.resolve("empty").resolve("config.json")).load(d));
     }
 }

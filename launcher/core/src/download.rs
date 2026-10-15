@@ -1,5 +1,5 @@
 //! Verified, parallel downloads into a shared cache, plus version install (jar, libraries, natives, assets).
-use crate::version::{Artifact, AssetIndex, VersionJson};
+use crate::version::{AssetIndex, VersionJson};
 use crate::{Error, Result};
 use futures::stream::{self, StreamExt};
 use sha1::{Digest, Sha1};
@@ -137,16 +137,29 @@ pub async fn install_version(
         if let Some(d) = lib.main_download() {
             let dest = layout.libraries().join(&d.path);
             if !installed.classpath.contains(&dest) {
-                jobs.push((d.url, dest.clone(), d.sha1));
+                if lib.local {
+                    if !dest.exists() {
+                        return Err(Error::Other(format!("missing library {} (reinstall the loader)", lib.name)));
+                    }
+                } else {
+                    jobs.push((d.url, dest.clone(), d.sha1));
+                }
                 installed.classpath.push(dest);
             }
         }
-        if let Some(a) = lib.native_artifact() {
-            let dest = artifact_dest(layout, a);
-            jobs.push((a.url.clone(), dest.clone(), Some(a.sha1.clone())));
+        if let Some(d) = lib.native_download() {
+            let dest = layout.libraries().join(&d.path);
+            jobs.push((d.url, dest.clone(), d.sha1));
             let exclude = lib.extract.as_ref().map(|e| e.exclude.clone()).unwrap_or_default();
             native_jars.push((dest, exclude));
         }
+    }
+    // Loaders can swap the natives (Legacy Fabric's LWJGL), so each native set gets its own folder: a vanilla and a
+    // modded profile of the same version must not overwrite each other's DLLs.
+    if !native_jars.is_empty() && version.libraries.iter().any(|l| !l.natives.is_empty() && l.downloads.is_none()) {
+        let mut names: Vec<String> = native_jars.iter().map(|(p, _)| p.display().to_string()).collect();
+        names.sort();
+        installed.natives_dir = layout.version_dir(&version.id).join(format!("natives-{}", &sha1_hex(names.join("\n").as_bytes())[..8]));
     }
     fetch_all(client, jobs, |d, t| progress("libraries", d, t)).await?;
     for (jar, exclude) in native_jars {
@@ -193,11 +206,6 @@ pub async fn install_version(
     }
 
     Ok(installed)
-}
-
-fn artifact_dest(layout: &Layout, a: &Artifact) -> PathBuf {
-    let rel = a.path.clone().unwrap_or_else(|| a.url.rsplit('/').next().unwrap_or("unknown.jar").to_string());
-    layout.libraries().join(rel)
 }
 
 /// Extract native libraries from `jar` into `dest`, skipping excluded prefixes (e.g. META-INF/).

@@ -1,0 +1,47 @@
+{
+  "id": "hat-halo",
+  "name": "Halo",
+  "description": "A glowing halo that floats and slowly turns above your head.",
+  "slot": "hat",
+  "rarity": "legendary",
+  "textureSize": [32, 16],
+  "parts": [
+    {
+      "bone": "head",
+      "pivot": [0, -12, 0],
+      "rotation": [-8, 0, 0],
+      "animate": {
+        "bob": 0.7,
+        "spin": 1.2,
+        "speed": 0.08
+      },
+      "cubes": [
+        {
+          "from": [-4, -0.5, -4],
+          "size": [8, 1, 1],
+          "uv": [0, 0],
+          "glow": true
+        },
+        {
+          "from": [-4, -0.5, 3],
+          "size": [8, 1, 1],
+          "uv": [0, 2],
+          "glow": true
+        },
+        {
+          "from": [-4, -0.5, -3],
+          "size": [1, 1, 6],
+          "uv": [18, 2],
+          "glow": true
+        },
+        {
+          "from": [3, -0.5, -3],
+          "size": [1, 1, 6],
+          "uv": [0, 9],
+          "glow": true
+        }
+      ]
+    }
+  ],
+  "iconImage": "icon.png"
+}

@@ -60,6 +60,16 @@ pub struct SearchHit {
     pub author: String,
     pub categories: Vec<String>,
     pub project_type: String,
+    #[serde(default)]
+    pub display_categories: Vec<String>,
+    #[serde(default)]
+    pub follows: u64,
+    #[serde(default)]
+    pub date_modified: String,
+    #[serde(default)]
+    pub featured_gallery: Option<String>,
+    #[serde(default)]
+    pub versions: Vec<String>,
 }
 
 #[derive(Debug, Deserialize, serde::Serialize)]
@@ -68,14 +78,14 @@ pub struct SearchResponse {
     pub total_hits: u64,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, serde::Serialize)]
 pub struct Hashes {
     pub sha1: String,
     #[serde(default)]
     pub sha512: Option<String>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, serde::Serialize)]
 pub struct VersionFile {
     pub url: String,
     pub filename: String,
@@ -84,14 +94,14 @@ pub struct VersionFile {
     pub hashes: Hashes,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, serde::Serialize)]
 pub struct Dependency {
     pub version_id: Option<String>,
     pub project_id: Option<String>,
     pub dependency_type: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, serde::Serialize)]
 pub struct Version {
     pub id: String,
     pub project_id: String,
@@ -113,7 +123,16 @@ impl Version {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, serde::Serialize)]
+pub struct GalleryImage {
+    pub url: String,
+    #[serde(default)]
+    pub featured: bool,
+    #[serde(default)]
+    pub title: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize, serde::Serialize)]
 pub struct Project {
     pub id: String,
     pub slug: String,
@@ -121,6 +140,61 @@ pub struct Project {
     pub description: String,
     pub project_type: String,
     pub icon_url: Option<String>,
+    /// Long description (markdown; HTML when `body_html`).
+    #[serde(default)]
+    pub body: String,
+    #[serde(default)]
+    pub body_html: bool,
+    #[serde(default)]
+    pub downloads: u64,
+    #[serde(default)]
+    pub followers: u64,
+    #[serde(default)]
+    pub published: String,
+    #[serde(default)]
+    pub updated: String,
+    #[serde(default)]
+    pub categories: Vec<String>,
+    #[serde(default)]
+    pub loaders: Vec<String>,
+    #[serde(default)]
+    pub game_versions: Vec<String>,
+    #[serde(default)]
+    pub versions: Vec<String>,
+    #[serde(default)]
+    pub gallery: Vec<GalleryImage>,
+    #[serde(default)]
+    pub source_url: Option<String>,
+    #[serde(default)]
+    pub issues_url: Option<String>,
+    #[serde(default)]
+    pub wiki_url: Option<String>,
+    #[serde(default)]
+    pub discord_url: Option<String>,
+    /// The project's page on its site, when it isn't derivable from the slug.
+    #[serde(default)]
+    pub page_url: Option<String>,
+}
+
+/// Search with explicit filters (the Content page). Empty lists mean "any".
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct SearchQuery {
+    #[serde(default)]
+    pub query: String,
+    pub kind: Option<ProjectType>,
+    #[serde(default)]
+    pub game_versions: Vec<String>,
+    #[serde(default)]
+    pub loaders: Vec<String>,
+    #[serde(default)]
+    pub categories: Vec<String>,
+    /// relevance | downloads | follows | newest | updated
+    #[serde(default)]
+    pub sort: Option<String>,
+    #[serde(default)]
+    pub offset: u32,
+    #[serde(default)]
+    pub limit: u32,
 }
 
 #[derive(Clone)]
@@ -166,13 +240,42 @@ impl Modrinth {
         Ok(r.json().await?)
     }
 
+    /// Search with the filters of a [`SearchQuery`].
+    pub async fn search_query(&self, q: &SearchQuery) -> Result<SearchResponse> {
+        let facets = query_facets(q);
+        let sort = match q.sort.as_deref() {
+            Some(s @ ("relevance" | "downloads" | "follows" | "newest" | "updated")) => s,
+            _ if q.query.is_empty() => "downloads",
+            _ => "relevance",
+        };
+        let limit = if q.limit == 0 { 20 } else { q.limit.min(50) };
+        let r = self
+            .client
+            .get(format!("{}/search", self.base))
+            .query(&[
+                ("query", q.query.as_str()),
+                ("facets", facets.as_str()),
+                ("offset", &q.offset.to_string()),
+                ("limit", &limit.to_string()),
+                ("index", sort),
+            ])
+            .send()
+            .await?
+            .error_for_status()?;
+        Ok(r.json().await?)
+    }
+
     pub async fn project(&self, id_or_slug: &str) -> Result<Project> {
         Ok(self.client.get(format!("{}/project/{}", self.base, id_or_slug)).send().await?.error_for_status()?.json().await?)
     }
 
     /// Versions of a project compatible with the given game version and loaders, newest first.
     pub async fn versions(&self, project: &str, mc_version: &str, loaders: &[String]) -> Result<Vec<Version>> {
-        let mut q: Vec<(&str, String)> = vec![("game_versions", serde_json::to_string(&[mc_version])?)];
+        // An empty game version lists every version of the project.
+        let mut q: Vec<(&str, String)> = Vec::new();
+        if !mc_version.is_empty() {
+            q.push(("game_versions", serde_json::to_string(&[mc_version])?));
+        }
         if !loaders.is_empty() {
             q.push(("loaders", serde_json::to_string(loaders)?));
         }
@@ -188,6 +291,36 @@ impl Modrinth {
 
     pub async fn version(&self, id: &str) -> Result<Version> {
         Ok(self.client.get(format!("{}/version/{}", self.base, id)).send().await?.error_for_status()?.json().await?)
+    }
+
+    /// Several versions in one request (unknown ids are left out).
+    pub async fn versions_by_ids(&self, ids: &[String]) -> Result<Vec<Version>> {
+        if ids.is_empty() {
+            return Ok(vec![]);
+        }
+        let r = self
+            .client
+            .get(format!("{}/versions", self.base))
+            .query(&[("ids", serde_json::to_string(ids)?)])
+            .send()
+            .await?
+            .error_for_status()?;
+        Ok(r.json().await?)
+    }
+
+    /// Several projects in one request (unknown ids are left out).
+    pub async fn projects(&self, ids: &[String]) -> Result<Vec<Project>> {
+        if ids.is_empty() {
+            return Ok(vec![]);
+        }
+        let r = self
+            .client
+            .get(format!("{}/projects", self.base))
+            .query(&[("ids", serde_json::to_string(ids)?)])
+            .send()
+            .await?
+            .error_for_status()?;
+        Ok(r.json().await?)
     }
 
     /// Identify local files by SHA1 (map: hash -> version).
@@ -236,9 +369,44 @@ pub fn build_facets(kind: ProjectType, mc_version: Option<&str>, loader: Option<
     serde_json::to_string(&f).unwrap()
 }
 
+/// Facets for a [`SearchQuery`]: each list is one OR group, groups are ANDed.
+pub fn query_facets(q: &SearchQuery) -> String {
+    let mut f: Vec<Vec<String>> = Vec::new();
+    if let Some(k) = q.kind {
+        f.push(vec![format!("project_type:{}", k.as_str())]);
+    }
+    let group = |prefix: &str, vals: &[String]| vals.iter().map(|v| format!("{prefix}:{v}")).collect::<Vec<_>>();
+    for g in [group("versions", &q.game_versions), group("categories", &q.loaders)] {
+        if !g.is_empty() {
+            f.push(g);
+        }
+    }
+    // Every picked category must match.
+    for c in &q.categories {
+        f.push(vec![format!("categories:{c}")]);
+    }
+    serde_json::to_string(&f).unwrap()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn query_facets_shape() {
+        let q = SearchQuery {
+            kind: Some(ProjectType::Mod),
+            game_versions: vec!["1.21.4".into()],
+            loaders: vec!["fabric".into(), "quilt".into()],
+            categories: vec!["optimization".into(), "utility".into()],
+            ..Default::default()
+        };
+        assert_eq!(
+            query_facets(&q),
+            r#"[["project_type:mod"],["versions:1.21.4"],["categories:fabric","categories:quilt"],["categories:optimization"],["categories:utility"]]"#
+        );
+        assert_eq!(query_facets(&SearchQuery::default()), "[]");
+    }
 
     #[test]
     fn facets_shape() {

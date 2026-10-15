@@ -1,0 +1,36 @@
+{
+  "id": "wings-angel",
+  "name": "Angel Wings",
+  "description": "Feathered wings that flap as you move and beat hard in flight.",
+  "slot": "wings",
+  "rarity": "epic",
+  "textureSize": [64, 64],
+  "parts": [
+    {
+      "bone": "body",
+      "pivot": [-1.5, 2, 2.4],
+      "rotation": [0, 28, 12],
+      "mirror": true,
+      "animate": {
+        "rot": [0, 18, 4],
+        "speed": 0.09,
+        "flySpeed": 3,
+        "flyAmp": 1.7,
+        "walkAmp": 0.3
+      },
+      "cubes": [
+        {
+          "from": [-17, -9, 0.4],
+          "size": [17, 24, 0],
+          "uv": [0, 0]
+        },
+        {
+          "from": [-12, -7, 0.9],
+          "size": [12, 12, 0],
+          "uv": [34, 0]
+        }
+      ]
+    }
+  ],
+  "iconImage": "icon.png"
+}

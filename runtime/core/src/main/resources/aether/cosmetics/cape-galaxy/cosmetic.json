@@ -1,0 +1,9 @@
+{
+  "id": "cape-galaxy",
+  "name": "Galaxy",
+  "description": "An animated spiral galaxy with twinkling stars.",
+  "slot": "cape",
+  "rarity": "legendary",
+  "frames": 32,
+  "frameTime": 110
+}

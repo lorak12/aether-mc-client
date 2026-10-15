@@ -1,0 +1,40 @@
+{
+  "id": "face-shades",
+  "name": "Shades",
+  "description": "Dark sunglasses with a mirrored shine.",
+  "slot": "face",
+  "rarity": "common",
+  "textureSize": [32, 16],
+  "parts": [
+    {
+      "bone": "head",
+      "pivot": [0, 0, 0],
+      "mirror": true,
+      "cubes": [
+        {
+          "from": [-3.6, -5, -5.1],
+          "size": [3, 2, 1],
+          "uv": [0, 0]
+        },
+        {
+          "from": [-4.7, -5, -4.6],
+          "size": [1, 1, 5],
+          "uv": [8, 0]
+        }
+      ]
+    },
+    {
+      "bone": "head",
+      "pivot": [0, 0, 0],
+      "cubes": [
+        {
+          "from": [-0.6, -5, -5],
+          "size": [1, 1, 1],
+          "uv": [20, 0],
+          "inflate": 0.05
+        }
+      ]
+    }
+  ],
+  "iconImage": "icon.png"
+}

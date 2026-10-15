@@ -134,9 +134,127 @@ pub async fn ensure_runtime(
     Ok(exe)
 }
 
+/// A Java installation the user can pick instead of Mojang's runtime.
+#[derive(Debug, Clone, serde::Serialize, PartialEq)]
+pub struct JavaInstall {
+    pub path: String,
+    /// e.g. "21.0.5"
+    pub version: String,
+    pub major: u32,
+    pub vendor: String,
+    pub arch: String,
+}
+
+/// Major version from a `java.version` string ("1.8.0_402" -> 8, "21.0.5" -> 21).
+pub fn major_of(version: &str) -> Option<u32> {
+    let mut parts = version.split(['.', '_', '-', '+']);
+    let first: u32 = parts.next()?.parse().ok()?;
+    if first == 1 {
+        parts.next()?.parse().ok()
+    } else {
+        Some(first)
+    }
+}
+
+fn parse_properties(out: &str) -> Option<(String, String, String)> {
+    let prop = |k: &str| {
+        out.lines().find_map(|l| {
+            let (key, v) = l.split_once('=')?;
+            (key.trim() == k).then(|| v.trim().to_string())
+        })
+    };
+    Some((prop("java.version")?, prop("java.vendor").unwrap_or_default(), prop("os.arch").unwrap_or_default()))
+}
+
+/// Run `path -XshowSettings:properties -version` and read what it is. `javaw` is swapped for `java` (no console output).
+pub async fn probe(path: &std::path::Path) -> Result<JavaInstall> {
+    let mut exe = path.to_path_buf();
+    if exe.file_name().and_then(|n| n.to_str()).is_some_and(|n| n.eq_ignore_ascii_case("javaw.exe")) {
+        let alt = exe.with_file_name("java.exe");
+        if alt.exists() {
+            exe = alt;
+        }
+    }
+    if !exe.is_file() {
+        return Err(Error::Other(format!("{} doesn't exist", path.display())));
+    }
+    let mut cmd = tokio::process::Command::new(&exe);
+    cmd.args(["-XshowSettings:properties", "-version"]).stdin(std::process::Stdio::null());
+    #[cfg(windows)]
+    cmd.creation_flags(0x0800_0000);
+    let out = tokio::time::timeout(std::time::Duration::from_secs(10), cmd.output())
+        .await
+        .map_err(|_| Error::Other("Java didn't answer".into()))?
+        .map_err(|e| Error::Other(format!("couldn't run {}: {e}", exe.display())))?;
+    let text = format!("{}{}", String::from_utf8_lossy(&out.stderr), String::from_utf8_lossy(&out.stdout));
+    let (version, vendor, arch) = parse_properties(&text).ok_or_else(|| Error::Other(format!("{} isn't a Java runtime", path.display())))?;
+    let major = major_of(&version).unwrap_or(0);
+    Ok(JavaInstall { path: path.display().to_string(), version, major, vendor, arch })
+}
+
+/// Java executables in the usual install locations, JAVA_HOME, PATH and the launcher's own runtimes.
+pub fn candidates(layout: &Layout) -> Vec<PathBuf> {
+    let exe = if cfg!(windows) { "javaw.exe" } else { "java" };
+    let mut roots: Vec<PathBuf> = vec![layout.root.join("runtimes")];
+    if cfg!(windows) {
+        for var in ["ProgramFiles", "ProgramFiles(x86)", "ProgramW6432"] {
+            if let Some(p) = std::env::var_os(var) {
+                let p = PathBuf::from(p);
+                for vendor in ["Java", "Eclipse Adoptium", "Eclipse Foundation", "Microsoft", "Zulu", "BellSoft", "Amazon Corretto", "Semeru", "GraalVM"] {
+                    roots.push(p.join(vendor));
+                }
+            }
+        }
+        if let Some(home) = std::env::var_os("USERPROFILE") {
+            roots.push(PathBuf::from(home).join(".jdks"));
+        }
+    } else if cfg!(target_os = "macos") {
+        roots.push("/Library/Java/JavaVirtualMachines".into());
+    } else {
+        roots.extend(["/usr/lib/jvm".into(), "/usr/lib64/jvm".into(), "/opt/java".into()]);
+        if let Some(home) = std::env::var_os("HOME") {
+            roots.push(PathBuf::from(home).join(".jdks"));
+        }
+    }
+    let mut found: Vec<PathBuf> = Vec::new();
+    let mut push = |p: PathBuf| {
+        if p.is_file() && !found.contains(&p) {
+            found.push(p);
+        }
+    };
+    if let Some(h) = std::env::var_os("JAVA_HOME") {
+        push(PathBuf::from(h).join("bin").join(exe));
+    }
+    for root in roots {
+        let Ok(rd) = std::fs::read_dir(&root) else { continue };
+        for e in rd.flatten() {
+            let d = e.path();
+            push(java_exe(&d));
+            push(d.join("bin").join(exe));
+            push(d.join("Contents").join("Home").join("bin").join(exe));
+        }
+    }
+    if let Some(path) = std::env::var_os("PATH") {
+        for d in std::env::split_paths(&path) {
+            push(d.join(exe));
+        }
+    }
+    found
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn versions_and_properties() {
+        assert_eq!(major_of("1.8.0_402"), Some(8));
+        assert_eq!(major_of("21.0.5"), Some(21));
+        assert_eq!(major_of("17"), Some(17));
+        assert_eq!(major_of("x"), None);
+        let out = "Property settings:\n    java.vendor = Eclipse Adoptium\n    java.version = 21.0.5\n    os.arch = amd64\n";
+        assert_eq!(parse_properties(out), Some(("21.0.5".into(), "Eclipse Adoptium".into(), "amd64".into())));
+    }
 
     #[test]
     fn platform_known_here() {

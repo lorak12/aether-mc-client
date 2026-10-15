@@ -1,0 +1,58 @@
+{
+  "id": "ears-bunny",
+  "name": "Bunny Ears",
+  "description": "Tall white bunny ears with floppy tips.",
+  "slot": "ears",
+  "rarity": "rare",
+  "textureSize": [32, 32],
+  "parts": [
+    {
+      "bone": "head",
+      "pivot": [-2, -8.2, 0],
+      "rotation": [-6, 0, -10],
+      "mirror": true,
+      "animate": {
+        "rot": [5, 0, 3],
+        "speed": 0.05,
+        "walkAmp": 1
+      },
+      "cubes": [
+        {
+          "from": [-1, -6, 0],
+          "size": [2, 6, 1],
+          "uv": [0, 0]
+        },
+        {
+          "from": [-0.5, -5.5, -0.3],
+          "size": [1, 5, 1],
+          "uv": [6, 0]
+        }
+      ],
+      "children": [
+        {
+          "pivot": [0, -6, 0.5],
+          "rotation": [-28, 0, 0],
+          "animate": {
+            "rot": [8, 0, 0],
+            "speed": 0.07,
+            "phase": 1,
+            "walkAmp": 1.5
+          },
+          "cubes": [
+            {
+              "from": [-1, -3, -0.5],
+              "size": [2, 3, 1],
+              "uv": [10, 0]
+            },
+            {
+              "from": [-0.5, -2.5, -0.8],
+              "size": [1, 2, 1],
+              "uv": [16, 0]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "iconImage": "icon.png"
+}

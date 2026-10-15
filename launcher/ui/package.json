@@ -6,23 +6,34 @@
   "scripts": {
     "tokens": "node ../../brand/build-tokens.mjs",
     "dev": "npm run tokens && vite",
-    "build": "npm run tokens && tsc --noEmit && vite build"
+    "licenses": "node scripts/licenses.mjs",
+    "build": "npm run tokens && npm run licenses && tsc --noEmit && vite build",
+    "test": "vitest run"
   },
   "dependencies": {
+    "@fontsource-variable/figtree": "^5.3.0",
     "@fontsource-variable/inter": "^5.3.0",
     "@fontsource-variable/sora": "^5.3.0",
+    "@fontsource/space-mono": "^5.3.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "^2",
+    "dompurify": "^3.4.16",
+    "fuse.js": "^7.5.0",
+    "marked": "^18.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "three": "^0.186.1"
   },
   "devDependencies": {
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@types/three": "^0.186.0",
     "@vitejs/plugin-react": "^4.3.1",
+    "jsdom": "^25.0.1",
     "typescript": "^5.5.4",
-    "vite": "^5.4.0"
+    "vite": "^5.4.0",
+    "vitest": "^2.1.9"
   }
 }

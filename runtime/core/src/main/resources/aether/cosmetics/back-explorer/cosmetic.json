@@ -1,0 +1,63 @@
+{
+  "id": "back-explorer",
+  "name": "Explorer Pack",
+  "description": "A canvas backpack with a bedroll, for long journeys.",
+  "slot": "back",
+  "rarity": "common",
+  "textureSize": [64, 64],
+  "parts": [
+    {
+      "bone": "body",
+      "pivot": [0, 0, 0],
+      "cubes": [
+        {
+          "from": [-3.5, 2, 2.4],
+          "size": [7, 8, 3],
+          "uv": [0, 0]
+        },
+        {
+          "from": [-3.5, 1.5, 2.4],
+          "size": [7, 3, 3],
+          "uv": [20, 0],
+          "inflate": 0.2
+        },
+        {
+          "from": [-4.5, -0.3, 3.2],
+          "size": [9, 2, 2],
+          "uv": [40, 0]
+        },
+        {
+          "from": [-4.5, 5, 2.9],
+          "size": [1, 4, 2],
+          "uv": [0, 11]
+        },
+        {
+          "from": [3.5, 5, 2.9],
+          "size": [1, 4, 2],
+          "uv": [6, 11]
+        },
+        {
+          "from": [-3, 0, -2.6],
+          "size": [1, 6, 1],
+          "uv": [12, 11]
+        },
+        {
+          "from": [2, 0, -2.6],
+          "size": [1, 6, 1],
+          "uv": [16, 11]
+        },
+        {
+          "from": [-3, -0.4, -2.4],
+          "size": [1, 1, 5],
+          "uv": [20, 11]
+        },
+        {
+          "from": [2, -0.4, -2.4],
+          "size": [1, 1, 5],
+          "uv": [32, 11]
+        }
+      ]
+    }
+  ],
+  "iconImage": "icon.png"
+}
