@@ -11,7 +11,10 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -43,6 +46,21 @@ abstract class GameRendererMixin {
         Overrides fx = AetherClient.fx();
         if (fx.freelook) return;
         player.increaseTransforms(yaw * fx.sensitivityMultiplier, pitch * fx.sensitivityMultiplier);
+    }
+
+    /** Third-person camera distance (vanilla 4): the distance is the fourth double of the camera setup. */
+    @ModifyVariable(method = "transformCamera(F)V", at = @At(value = "STORE", ordinal = 0), ordinal = 3)
+    private double aether$distance(double distance) {
+        Float d = AetherClient.fx().cameraDistance;
+        return d == null ? distance : d;
+    }
+
+    /** Camera clip: the third-person camera ray-traces against blocks; without the trace it passes through them. */
+    @WrapOperation(method = "transformCamera(F)V", at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/world/ClientWorld;rayTrace(Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Vec3d;)Lnet/minecraft/util/hit/BlockHitResult;"))
+    private net.minecraft.util.hit.BlockHitResult aether$clip(net.minecraft.client.world.ClientWorld world, net.minecraft.util.math.Vec3d from,
+            net.minecraft.util.math.Vec3d to, Operation<net.minecraft.util.hit.BlockHitResult> original) {
+        return AetherClient.fx().noCameraClip ? null : original.call(world, from, to);
     }
 
     @Unique private float aether$yaw, aether$pitch, aether$prevYaw, aether$prevPitch;

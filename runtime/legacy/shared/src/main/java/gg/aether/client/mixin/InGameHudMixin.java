@@ -8,6 +8,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+//#if >=1.8
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+//#endif
 //#if <1.8
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -83,6 +86,12 @@ abstract class InGameHudMixin {
     private void aether$crosshair(InGameHud hud, int x, int y, int u, int v, int w, int h, Operation<Void> original) {
         if (!AetherClient.fx().hideVanillaCrosshair) original.call(hud, x, y, u, v, w, h);
     }
+//#endif
+
+//#if >=1.8
+    /** Title and subtitle: every read of the remaining time is 0 while a mod draws them itself. */
+    @ModifyExpressionValue(method = "render", at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/hud/InGameHud;titleTotalTicks:I"))
+    private int aether$title(int ticks) { return AetherClient.fx().hideVanillaTitle ? 0 : ticks; }
 //#endif
 
     @Inject(method = "setOverlayMessage(Ljava/lang/String;Z)V", at = @At("HEAD"), cancellable = true)

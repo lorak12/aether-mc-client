@@ -268,6 +268,81 @@ public final class LegacyCompat {
     public static float limbAmount(LivingEntity e, float tickDelta) { return e.field_6748 + (e.field_6749 - e.field_6748) * tickDelta; }
 //#endif
 
+    /** The hitbox debug render (F3+B). */
+    public static boolean hitboxes(MinecraftClient mc) {
+//#if >=1.8
+        return mc.getEntityRenderManager().getRenderHitboxes();
+//#else
+        return net.minecraft.client.render.entity.EntityRenderDispatcher.renderHitboxes;
+//#endif
+    }
+
+    public static void setHitboxes(MinecraftClient mc, boolean on) {
+//#if >=1.8
+        mc.getEntityRenderManager().setRenderHitboxes(on);
+//#else
+        net.minecraft.client.render.entity.EntityRenderDispatcher.renderHitboxes = on;
+//#endif
+    }
+
+    /** The chunk border debug render (F3+G, 1.9+). */
+    public static boolean chunkBorders(MinecraftClient mc) {
+//#if >=1.12
+        return mc.debugRenderer.isEnabled();
+//#else
+        return false;
+//#endif
+    }
+
+    public static void toggleChunkBorders(MinecraftClient mc) {
+//#if >=1.12
+        mc.debugRenderer.toggleChunkBorders();
+//#endif
+    }
+
+    /** The off-hand item (1.9+), null when empty or before 1.9. */
+    public static ItemStack offhand(PlayerEntity p) {
+//#if >=1.12
+        ItemStack st = p.getStack(net.minecraft.entity.EquipmentSlot.OFFHAND);
+        return st.isEmpty() ? null : st;
+//#else
+        return null;
+//#endif
+    }
+
+    /** {hunger, saturation} a food item restores, else null. */
+    public static float[] food(ItemStack st) {
+        if (st == null || !(st.getItem() instanceof net.minecraft.item.FoodItem)) return null;
+        net.minecraft.item.FoodItem f = (net.minecraft.item.FoodItem) st.getItem();
+        return new float[] { f.getHungerPoints(st), f.getHungerPoints(st) * f.getSaturation(st) * 2f };
+    }
+
+    /** Mining speed of {@code st} against the block at (x, y, z). */
+    public static float destroySpeed(ItemStack st, World w, int x, int y, int z) {
+        if (st == null) return 1f;
+//#if >=1.12
+        return st.getBlockBreakingSpeed(w.getBlockState(new net.minecraft.util.math.BlockPos(x, y, z)));
+//#else
+        return st.getMiningSpeedMultiplier(block(w, x, y, z));
+//#endif
+    }
+
+    /** Attack damage of {@code st}: a fist's 1 plus the item's attack damage modifier. */
+    public static float attackDamage(ItemStack st) {
+        if (st == null) return 1f;
+        double dmg = 1.0;
+//#if >=1.12
+        java.util.Collection<?> mods = st.getAttributes(net.minecraft.entity.EquipmentSlot.MAINHAND).get("generic.attackDamage");
+//#else
+        java.util.Collection<?> mods = st.getAttributes().get("generic.attackDamage");
+//#endif
+        for (Object o : mods) {
+            net.minecraft.entity.attribute.AttributeModifier m = (net.minecraft.entity.attribute.AttributeModifier) o;
+            if (m.getOperation() == 0) dmg += m.getAmount();
+        }
+        return (float) dmg;
+    }
+
     /** Whether the server's player list has {@code p} (a real player, not an NPC). */
     public static boolean inTabList(PlayerEntity p) {
         MinecraftClient mc = MinecraftClient.getInstance();

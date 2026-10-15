@@ -21,6 +21,9 @@ abstract class ClientPlayerInteractionManagerMixin {
         double dy = ey - Math.max(bb.minY, Math.min(bb.maxY, ey));
         double dz = ez - Math.max(bb.minZ, Math.min(bb.maxZ, ez));
         boolean crit = player.fallDistance > 0 && !player.onGround && !player.isClimbing() && !player.isTouchingWater() && !gg.aether.mc.LegacyCompat.riding(player);
+        gg.aether.core.Overrides fx = gg.aether.client.AetherClient.fx();
+        for (int i = 0; i < fx.extraCrits; i++) player.addCritParticles(target);
+        if (fx.alwaysMagicCrits) player.addEnchantedHitParticles(target);
         McEvents.attacked(target, Math.sqrt(dx * dx + dy * dy + dz * dz), crit);
     }
 }

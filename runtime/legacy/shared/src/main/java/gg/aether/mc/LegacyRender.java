@@ -24,7 +24,7 @@ public final class LegacyRender {
 
     private static volatile boolean saving;
     private static volatile float volumeScale = 1f, weatherScale = 1f;
-    private static boolean smoothApplied, smoothSaved;
+    private static boolean smoothApplied, smoothSaved, hitboxApplied, hitboxSaved, bordersApplied;
 
     private static double num(Object o) { return ((Number) o).doubleValue(); }
 
@@ -98,6 +98,19 @@ public final class LegacyRender {
         }
         volumeScale = fx.volumeScale;
         weatherScale = fx.weatherVolumeScale;
+        // Hitboxes / chunk borders are toggled by vanilla debug keys: remember the player's own state.
+        if (fx.showHitboxes && !hitboxApplied) {
+            hitboxSaved = LegacyCompat.hitboxes(mc);
+            LegacyCompat.setHitboxes(mc, true);
+            hitboxApplied = true;
+        } else if (!fx.showHitboxes && hitboxApplied) {
+            LegacyCompat.setHitboxes(mc, hitboxSaved);
+            hitboxApplied = false;
+        }
+        if (fx.showChunkBorders != bordersApplied && fx.showChunkBorders != LegacyCompat.chunkBorders(mc)) {
+            LegacyCompat.toggleChunkBorders(mc);
+        }
+        bordersApplied = fx.showChunkBorders;
         // Camera smoothing is a plain field toggled by a vanilla key: remember the player's own state.
         if (fx.smoothCamera && !smoothApplied) {
             smoothSaved = o.smoothCameraEnabled;

@@ -329,6 +329,107 @@ public final class McGameState implements GameState {
         return out;
     }
 
+    // ---- more player / world state ---------------------------------------------------------------------------------
+
+    @Override public gg.aether.core.GameState.ItemStack offhandItem() { return p() == null ? null : McItems.stack(LegacyCompat.offhand(p())); }
+
+    @Override public float[] heldFood() { return p() == null ? null : LegacyCompat.food(LegacyCompat.mainHand(p())); }
+
+    @Override public float hotbarDestroySpeed(int slot) {
+        ClientPlayerEntity p = p();
+        BlockHitResult hit = mc.result;
+        ClientWorld lv = level();
+        if (p == null || lv == null || hit == null || slot < 0 || slot > 8) return 0;
+//#if >=1.8
+        if (hit.type != BlockHitResult.Type.BLOCK || hit.getBlockPos() == null) return 0;
+        net.minecraft.util.math.BlockPos pos = hit.getBlockPos();
+        int x = pos.getX(), y = pos.getY(), z = pos.getZ();
+//#else
+        if (hit.hitResult != net.minecraft.util.hit.HitResultType.BLOCK) return 0;
+        int x = hit.x, y = hit.y, z = hit.z;
+//#endif
+        return LegacyCompat.destroySpeed(LegacyCompat.inventory(p, slot), lv, x, y, z);
+    }
+
+    @Override public float hotbarAttackDamage(int slot) {
+        ClientPlayerEntity p = p();
+        if (p == null || slot < 0 || slot > 8) return 1;
+        return LegacyCompat.attackDamage(LegacyCompat.inventory(p, slot));
+    }
+
+    @Override public String serverMotd() { return mc.getCurrentServerEntry() == null || mc.getCurrentServerEntry().label == null ? "" : strip(mc.getCurrentServerEntry().label); }
+    @Override public String serverVersion() { return mc.getCurrentServerEntry() == null || mc.getCurrentServerEntry().version == null ? "" : strip(mc.getCurrentServerEntry().version); }
+    @Override public String serverPlayers() {
+        return mc.getCurrentServerEntry() == null || mc.getCurrentServerEntry().playerCountLabel == null ? "" : strip(mc.getCurrentServerEntry().playerCountLabel);
+    }
+
+    @Override public String gpuName() { return org.lwjgl.opengl.GL11.glGetString(org.lwjgl.opengl.GL11.GL_RENDERER); }
+
+    @Override public int monitorRefreshRate() {
+        int hz = org.lwjgl.opengl.Display.getDisplayMode().getFrequency();
+        return hz > 0 ? hz : 60;
+    }
+
+    /** "C: 123/456 (s) D: 12, pC: 0, pU: 0, aB: 11" -> {rendered, total}. */
+    private int[] chunks() {
+        if (mc.worldRenderer == null) return new int[2];
+        String d = mc.worldRenderer.getChunksDebugString();
+        try {
+            int c = d.indexOf("C: ") + 3, slash = d.indexOf('/', c), end = d.indexOf(' ', slash);
+            return new int[] { Integer.parseInt(d.substring(c, slash).trim()), Integer.parseInt(d.substring(slash + 1, end).trim()) };
+        } catch (RuntimeException e) {
+            return new int[2];
+        }
+    }
+
+    @Override public int renderedChunks() { return chunks()[0]; }
+    @Override public int totalChunks() { return chunks()[1]; }
+
+    @Override public int renderedEntities() {
+        if (mc.worldRenderer == null) return 0;
+        String d = mc.worldRenderer.getEntitiesDebugString(); // "E: 12/34, B: 0, I: 5, ..."
+        try {
+            int c = d.indexOf("E: ") + 3;
+            return Integer.parseInt(d.substring(c, d.indexOf('/', c)).trim());
+        } catch (RuntimeException e) {
+            return 0;
+        }
+    }
+
+    @Override public Boolean slimeChunk(int cx, int cz) {
+        net.minecraft.server.integrated.IntegratedServer sv = mc.getServer();
+        if (sv == null) return null;
+        long seed = sv.worlds[0].getSeed();
+        java.util.Random r = new java.util.Random(seed + (long) (cx * cx * 4987142) + (long) (cx * 5947611) + (long) (cz * cz) * 4392871L + (long) (cz * 389711) ^ 987234911L);
+        return r.nextInt(10) == 0;
+    }
+
+    @Override public int caveColor(int x, int z, int fromY) {
+        ClientWorld lv = level();
+        if (lv == null) return -1;
+        boolean air = false;
+        for (int y = fromY; y > Math.max(0, fromY - 64); y--) {
+            net.minecraft.block.Block b = LegacyCompat.block(lv, x, y, z);
+            if (b == net.minecraft.block.Blocks.AIR) air = true;
+            else if (air) return LegacyCompat.mapColor(lv, x, y, z);
+        }
+        return -1;
+    }
+
+    private static String strip(String s) { return s.replaceAll("\u00a7.", ""); }
+
+    // ---- vanilla HUD state: boss bars, sidebar, title, tab header / footer ----------------------------------------------
+
+    @Override public List<BossBar> bossBars() { return LegacyHud.bossBars(mc); }
+
+    @Override public Sidebar sidebar() { return LegacyHud.sidebar(mc); }
+
+    @Override public Title title() { return LegacyHud.title(mc); }
+
+    @Override public String tabHeader() { return LegacyHud.tabText(mc, true); }
+
+    @Override public String tabFooter() { return LegacyHud.tabText(mc, false); }
+
     // ---- entities ---------------------------------------------------------------------------------------------------
 
     @Override public List<EntityInfo> entities(double radius) {
