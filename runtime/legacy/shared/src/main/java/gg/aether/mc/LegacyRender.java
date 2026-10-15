@@ -130,6 +130,12 @@ public final class LegacyRender {
         return value;
     }
 
+    /** Entity Hider: types a mod hides are not rendered. */
+    public static boolean hidden(net.minecraft.entity.Entity e) {
+        java.util.Set<String> hidden = gg.aether.client.AetherClient.fx().hiddenEntities;
+        return !hidden.isEmpty() && e != MinecraftClient.getInstance().player && hidden.contains("minecraft:" + McItems.entityId(e));
+    }
+
     // ---- nametags ---------------------------------------------------------------------------------------------------
 
     /** The label to draw above {@code e}, or null to draw none. */
