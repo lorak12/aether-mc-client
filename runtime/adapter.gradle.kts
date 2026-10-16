@@ -1,6 +1,6 @@
 // Shared by every Fabric adapter (applied from each vX/build.gradle.kts after its Loom plugin and minecraft
 // dependency). The adapter sets `extra["mc"]`, `extra["java"]` and `extra["sharedSrc"]` before applying this.
-// Shades core + mods into one self-contained jar: no Fabric API needed, so dropping build/libs/aether-*.jar into a
+// Shades core + mods into one self-contained jar: no Fabric API needed, so dropping build/libs/kite-*.jar into a
 // Fabric profile's mods folder is enough.
 
 val mc = extra["mc"] as String
@@ -12,7 +12,7 @@ val javaVersion = extra["java"] as Int
 val sharedSrc = extra["sharedSrc"] as List<String>
 
 version = "0.1.0"
-extensions.configure<BasePluginExtension> { archivesName.set("aether-$mc") }
+extensions.configure<BasePluginExtension> { archivesName.set("kite-$mc") }
 
 // Java 8 targets compile with JDK 17 and --release 8 (JDK 8's javac has no --release); dev runs use it too, which
 // Legacy Fabric and 1.16.5 handle fine.
@@ -23,7 +23,7 @@ tasks.withType<JavaCompile>().configureEach {
     options.compilerArgs.addAll(listOf("-Xmaxerrs", "2000"))
 }
 
-// Adapter code shared by several Minecraft versions (gg.aether.mc and friends), compiled against this version; see
+// Adapter code shared by several Minecraft versions (gg.kite.mc and friends), compiled against this version; see
 // Compat. Layered: a file in this adapter's own src/main/java replaces the shared file with the same path, and among
 // the shared dirs the first listed wins. Fonts and textures shared by every version live in mc-shared's resources.
 //
@@ -81,8 +81,8 @@ val renameTable: List<Triple<String, String, String>> = listOf(
     Triple("1.21.11", "RenderTypes", "RenderType"),
     Triple("1.21.11", "refreshCategoryVolume", "updateSourceVolume"),
     // 1.21.2: entity render states, ToastManager, ShapeRenderer, Level.getMinY/getMaxY, ARGB NativeImage pixels.
-    // Older versions render players from the entity; gg.aether.mc.PlayerState stands in for the render state.
-    Triple("1.21.2", "net.minecraft.client.renderer.entity.state.PlayerRenderState", "gg.aether.mc.PlayerState"),
+    // Older versions render players from the entity; gg.kite.mc.PlayerState stands in for the render state.
+    Triple("1.21.2", "net.minecraft.client.renderer.entity.state.PlayerRenderState", "gg.kite.mc.PlayerState"),
     Triple("1.21.2", "PlayerRenderState", "PlayerState"),
     Triple("1.21.2", "toasts.ToastManager", "toasts.ToastComponent"),
     Triple("1.21.2", "ToastManager", "ToastComponent"),
@@ -151,6 +151,10 @@ val yarnRenameTable: List<Triple<String, String, String>> = listOf(
     Triple("1.8", "MinecraftClient.getInstance().player", "MinecraftClient.getInstance().field_3805"),
     Triple("1.8", "getCameraEntity()", "field_6279"),
     Triple("1.8", "getBoundingBox()", "boundingBox"),
+    Triple("1.8", "m.rightArm", "m.field_1476"),
+    Triple("1.8", "m.leftArm", "m.field_1477"),
+    Triple("1.8", "m.rightLeg", "m.field_1478"),
+    Triple("1.8", "m.leftLeg", "m.field_1479"),
 )
 val renames: List<Pair<Regex, String>> = (if (mojangNames) renameTable else yarnRenameTable).filter { compareVersions(mc, it.first) < 0 }.map {
     val from = it.second
@@ -209,7 +213,7 @@ val sharedSources = tasks.register<Sync>("sharedSources") {
         filter { line -> preprocessLine(line, stack, "$file:${++n}") }
     }
 }
-// fabric.mod.json and aether.mixins.json are generated: the mixin list is every @Mixin class this version compiles
+// fabric.mod.json and kite.mixins.json are generated: the mixin list is every @Mixin class this version compiles
 // (shared files whose //#if excludes this version come out empty), so no version keeps its own list.
 val generatedResources = layout.buildDirectory.dir("generated/adapter-resources")
 val adapterResources = tasks.register("adapterResources") {
@@ -220,17 +224,17 @@ val adapterResources = tasks.register("adapterResources") {
     inputs.property("java", javaVersion)
     outputs.dir(generatedResources)
     doLast {
-        val mixins = sources.asFileTree.matching { include("gg/aether/client/mixin/*.java") }.files
+        val mixins = sources.asFileTree.matching { include("gg/kite/client/mixin/*.java") }.files
             .filter { it.readText().contains("@Mixin(") }.map { it.nameWithoutExtension }.sorted().distinct()
         val out = generatedResources.get().asFile
         out.mkdirs()
         val list = mixins.joinToString(",\n") { "    \"$it\"" }
-        out.resolve("aether.mixins.json").writeText(
+        out.resolve("kite.mixins.json").writeText(
             """
             |{
             |  "required": true,
             |  "minVersion": "0.8",
-            |  "package": "gg.aether.client.mixin",
+            |  "package": "gg.kite.client.mixin",
             |  "compatibilityLevel": "JAVA_$javaVersion",
             |  "client": [
             |LIST
@@ -242,15 +246,15 @@ val adapterResources = tasks.register("adapterResources") {
             """
             {
               "schemaVersion": 1,
-              "id": "aether",
+              "id": "kite",
               "version": "${'$'}{version}",
-              "name": "Aether Client",
-              "description": "Aether client mods: HUD, zoom, freelook, crosshair and more. Right Shift opens the mod menu; replaces the title screen with the Aether menu.",
+              "name": "Kite Client",
+              "description": "Kite client mods: HUD, zoom, freelook, crosshair and more. Right Shift opens the mod menu; replaces the title screen with the Kite menu.",
               "license": "All-Rights-Reserved",
               "environment": "client",
-              "entrypoints": { "client": ["gg.aether.client.AetherClient"] },
-              "mixins": ["aether.mixins.json"],
-              "custom": { "aether:build": "${'$'}{build}" },
+              "entrypoints": { "client": ["gg.kite.client.KiteClient"] },
+              "mixins": ["kite.mixins.json"],
+              "custom": { "kite:build": "${'$'}{build}" },
               "depends": { "fabricloader": ">=0.16.0", "minecraft": "$mc", "java": ">=$javaVersion" }
             }
             """.trimIndent() + "\n")
@@ -272,8 +276,8 @@ dependencies {
     shade(project(":mods"))
 }
 
-// Build number on the main menu ("v0.1.0-123"): AETHER_BUILD on CI, otherwise the git commit count.
-val buildNumber: String = providers.environmentVariable("AETHER_BUILD").orElse(
+// Build number on the main menu ("v0.1.0-123"): KITE_BUILD on CI, otherwise the git commit count.
+val buildNumber: String = providers.environmentVariable("KITE_BUILD").orElse(
     providers.exec {
         commandLine("git", "rev-list", "--count", "HEAD")
         isIgnoreExitValue = true
