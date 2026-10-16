@@ -12,7 +12,7 @@ pluginManagement {
 // Downloads the JDKs the adapters compile for (8, 17, 21, 25) when they aren't installed.
 plugins { id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0" }
 
-rootProject.name = "aether-legacy"
+rootProject.name = "kite-legacy"
 include("core", "mods")
 project(":core").projectDir = file("../core")
 project(":mods").projectDir = file("../mods")

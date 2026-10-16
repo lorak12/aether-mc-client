@@ -19,12 +19,12 @@ dependencies {
 loom {
     runs {
         // Config and worlds live in runtime/legacy/v1_8_9/run; the in-game menu opens with Right Shift.
-        named("client") { programArgs("--username", "AetherDev") }
+        named("client") { programArgs("--username", "KiteDev") }
         // Mixin audit: loads every mixin target at the title screen and quits; a broken hook fails the run.
         register("audit") {
             inherit(getByName("client"))
-            configName = "Aether Mixin Audit"
-            vmArgs("-Daether.audit=true", "-Dmixin.debug.countInjections=true")
+            configName = "Kite Mixin Audit"
+            vmArgs("-Dkite.audit=true", "-Dmixin.debug.countInjections=true")
         }
     }
 }
