@@ -1,10 +1,10 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
-title Aether
+title Kite
 cd /d "%~dp0"
 
 rem ---------------------------------------------------------------------------
-rem  Aether dev starter: backend + launcher in one go.
+rem  Kite dev starter: backend + launcher in one go.
 rem
 rem    start.bat               backend (watch mode) + launcher (cargo tauri dev)
 rem    start.bat --release     build the release launcher exe and run that
@@ -76,8 +76,8 @@ if "%BUILD_RUNTIME%"=="1" (
   if not "!ERR!"=="0" goto fail
 ) else (
   set "JARS=0"
-  for %%f in (runtime\v1_21_11\build\libs\aether-*.jar runtime\v26_1\build\libs\aether-*.jar runtime\v26_1_1\build\libs\aether-*.jar runtime\v26_1_2\build\libs\aether-*.jar runtime\v26_2\build\libs\aether-*.jar runtime\v26_3\build\libs\aether-*.jar) do set "JARS=1"
-  if "!JARS!"=="0" echo %C_WARN%[warn]%C_OFF% No client jars built yet; Play won't install the Aether client. Run: start.bat --build
+  for %%f in (runtime\v1_21_11\build\libs\kite-*.jar runtime\v26_1\build\libs\kite-*.jar runtime\v26_1_1\build\libs\kite-*.jar runtime\v26_1_2\build\libs\kite-*.jar runtime\v26_2\build\libs\kite-*.jar runtime\v26_3\build\libs\kite-*.jar) do set "JARS=1"
+  if "!JARS!"=="0" echo %C_WARN%[warn]%C_OFF% No client jars built yet; Play won't install the Kite client. Run: start.bat --build
 )
 
 rem --- backend ---------------------------------------------------------------
@@ -88,7 +88,7 @@ if exist "backend\.env" for /f "usebackq eol=# tokens=1,* delims==" %%a in ("bac
 set "STARTED_BACKEND=0"
 if "%WITH_BACKEND%"=="0" goto launcher
 
-set "AETHER_BACKEND_URL=http://localhost:%PORT%"
+set "KITE_BACKEND_URL=http://localhost:%PORT%"
 call :health && (
   echo %C_OK%[ok]%C_OFF% Backend already running on :%PORT%, reusing it.
   goto launcher
@@ -96,7 +96,7 @@ call :health && (
 if not exist "backend\.env" echo %C_WARN%[warn]%C_OFF% backend\.env not found; the backend starts with defaults (no offline sign-in).
 call :step "Starting backend on :%PORT%"
 set "BACKEND_PID="
-for /f %%p in ('powershell -NoProfile -Command "(Start-Process cmd -ArgumentList '/c','title Aether Backend && npm run dev' -WorkingDirectory '%~dp0backend' -WindowStyle Minimized -PassThru).Id"') do set "BACKEND_PID=%%p"
+for /f %%p in ('powershell -NoProfile -Command "(Start-Process cmd -ArgumentList '/c','title Kite Backend && npm run dev' -WorkingDirectory '%~dp0backend' -WindowStyle Minimized -PassThru).Id"') do set "BACKEND_PID=%%p"
 if not defined BACKEND_PID goto fail
 set "STARTED_BACKEND=1"
 set /a "TRIES=0"
@@ -104,13 +104,13 @@ set /a "TRIES=0"
 call :health && goto backend_up
 set /a "TRIES+=1"
 if !TRIES! geq 30 (
-  echo %C_ERR%[x]%C_OFF% Backend didn't answer on :%PORT% within 30s. Check the "Aether Backend" window.
+  echo %C_ERR%[x]%C_OFF% Backend didn't answer on :%PORT% within 30s. Check the "Kite Backend" window.
   goto fail
 )
 ping -n 2 127.0.0.1 >nul
 goto wait_backend
 :backend_up
-echo %C_OK%[ok]%C_OFF% Backend up at %AETHER_BACKEND_URL%
+echo %C_OK%[ok]%C_OFF% Backend up at %KITE_BACKEND_URL%
 
 rem --- launcher --------------------------------------------------------------
 :launcher
@@ -119,7 +119,7 @@ if "%MODE%"=="release" (
   pushd launcher\src-tauri & call cargo tauri build --no-bundle & set "ERR=!errorlevel!" & popd
   if not "!ERR!"=="0" goto fail
   call :step "Running launcher"
-  "target\release\aether-launcher.exe"
+  "target\release\kite-launcher.exe"
 ) else (
   call :step "Starting launcher (cargo tauri dev) - first build can take a few minutes"
   pushd launcher\src-tauri & call cargo tauri dev & popd
@@ -167,7 +167,7 @@ echo Usage: start.bat [--release] [--build] [--no-backend]
 echo.
 echo   (no flags)     backend in watch mode + launcher with hot reload (cargo tauri dev)
 echo   --release      build the release launcher exe and run it
-echo   --build        rebuild the Aether client jars (1.21.11, 26.2, 26.3) before starting
+echo   --build        rebuild the Kite client jars (1.21.11, 26.2, 26.3) before starting
 echo   --no-backend   start only the launcher
 echo.
 endlocal

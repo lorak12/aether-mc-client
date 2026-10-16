@@ -13,9 +13,9 @@ shop item to open a card with its description, price and your balance, and buy i
 everything for sale. Purchases use the account's coins (`POST /v1/store/buy`), the same as the launcher's store, and a
 bought item is equipped right away. Drag the preview to turn the player and up/down to tilt the view.
 
-**Admins** (`backend/src/admins.ts`, currently `nakii14`; add more with `AETHER_ADMINS=name1,name2`) have unlimited
+**Admins** (`backend/src/admins.ts`, currently `nakii14`; add more with `KITE_ADMINS=name1,name2`) have unlimited
 coins, and they alone get **Import**, **Folder** and **Reload**. Names are verified by Mojang; offline (dev) sign-ins can
-claim any name, which is why `AETHER_ALLOW_OFFLINE` is refused in production.
+claim any name, which is why `KITE_ALLOW_OFFLINE` is refused in production.
 
 ## Importing and publishing
 
@@ -109,7 +109,7 @@ Hats and ears hide under a helmet, boots under boots and wings under an elytra, 
 
 ```sh
 cd runtime && ./gradlew.bat :core:compileJava && cd ..
-java -cp runtime/core/build/classes/java/main cosmetics/StarterCosmetics.java runtime/core/src/main/resources/aether/cosmetics --preview <some dir>
+java -cp runtime/core/build/classes/java/main cosmetics/StarterCosmetics.java runtime/core/src/main/resources/kite/cosmetics --preview <some dir>
 ```
 
 `--preview` also renders every cosmetic on a plain player (front and back) into `<some dir>`, so you can check a

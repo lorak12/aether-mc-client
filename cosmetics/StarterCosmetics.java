@@ -1,5 +1,5 @@
-import gg.aether.core.cosmetics.CosmeticModel;
-import gg.aether.core.cosmetics.Mesh;
+import gg.kite.core.cosmetics.CosmeticModel;
+import gg.kite.core.cosmetics.Mesh;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -21,7 +21,7 @@ import javax.imageio.ImageIO;
  *
  * <pre>
  * cd runtime && ./gradlew.bat :core:compileJava
- * java -cp runtime/core/build/classes/java/main cosmetics/StarterCosmetics.java runtime/core/src/main/resources/aether/cosmetics [--preview out]
+ * java -cp runtime/core/build/classes/java/main cosmetics/StarterCosmetics.java runtime/core/src/main/resources/kite/cosmetics [--preview out]
  * </pre>
  */
 public final class StarterCosmetics {
@@ -471,21 +471,51 @@ public final class StarterCosmetics {
         return clamp255(best * 255);
     }
 
-    static final CapeArt AETHER = (x, y, t) -> {
+    /** The kite's four facets as triangles on the mark's 32-unit grid (light top right, darkest bottom right). */
+    static final double[][][] KITE_FACETS = {
+        {{16, 3}, {28, 13}, {16, 16}},
+        {{16, 3}, {4, 13}, {16, 16}},
+        {{4, 13}, {16, 16}, {16, 29}},
+        {{28, 13}, {16, 16}, {16, 29}},
+    };
+    static final int[] KITE_COLORS = { rgb(0xA78BFA), rgb(0x8B5CF6), rgb(0x7C3AED), rgb(0x6D28D9) };
+
+    static final CapeArt KITE = (x, y, t) -> {
         int c = mix(rgb(0x6C8CFF), rgb(0xB36CFF), y);
         c = mix(c, rgb(0x0B0D12), 0.35 + 0.25 * Math.abs(x - 0.5));
         double n = fbm(x * 6, y * 9, 0, 0, 3, 4) - 0.5;
         c = add(c, n * 30, n * 25, n * 40);
-        // The brand "Λ": two thick strokes meeting at the apex, cut flat at the bottom, with a soft glow.
-        double px = x * 10, py = y * 16;
-        double bottom = 12.2;
-        double d = Math.min(segDist(px, py, 5, 3.4, 1.6, bottom + 1), segDist(px, py, 5, 3.4, 8.4, bottom + 1));
-        int glyph = mix(rgb(0xDCE4FF), rgb(0xE9D8FF), y);
-        double w = 1.0;
-        if (d < w && py <= bottom) return mix(glyph, c, smooth(w - 0.2, w, d));
-        double g = Math.min(1, Math.max(0, 1 - (d - w) / 2.2)) * (py > bottom ? Math.max(0, 1 - (py - bottom) / 1.5) : 1);
-        return add(c, 55 * g, 55 * g, 85 * g);
+        // The brand kite (brand/kite-mark.svg, on its 32-unit grid): four flat facets and a tail, with a soft glow
+        // outside. Mark units are scaled to cape units by s.
+        double s = 0.27;
+        double kx = 16 + (x * 10 - 5) / s, ky = 16 + (y * 16 - 7.6) / s;
+        double facet = Double.MAX_VALUE;
+        int face = 0;
+        for (int i = 0; i < KITE_FACETS.length; i++) {
+            double fd = triSd(KITE_FACETS[i], kx, ky);
+            if (fd < facet) { facet = fd; face = i; }
+        }
+        double tail = Math.min(segDist(kx, ky, 16, 29, 13, 31.5), segDist(kx, ky, 16, 29, 19, 31.5)) - 0.8;
+        double d = Math.min(facet, tail) * s;
+        int glyph = tail < facet ? rgb(0x8B5CF6) : KITE_COLORS[face];
+        double cover = 1 - smooth(-0.03, 0.03, d);
+        double g = Math.max(0, 1 - d / 0.12) * (1 - cover);
+        return add(mix(c, glyph, cover), 55 * g, 55 * g, 85 * g);
     };
+
+    /** Signed distance from (x, y) to a triangle, negative inside: the largest signed distance to its three edges. */
+    static double triSd(double[][] t, double x, double y) {
+        double cx = (t[0][0] + t[1][0] + t[2][0]) / 3, cy = (t[0][1] + t[1][1] + t[2][1]) / 3;
+        double d = -Double.MAX_VALUE;
+        for (int i = 0; i < 3; i++) {
+            double[] a = t[i], b = t[(i + 1) % 3];
+            double ex = b[0] - a[0], ey = b[1] - a[1], len = Math.hypot(ex, ey);
+            double nx = ey / len, ny = -ex / len;
+            if ((cx - a[0]) * nx + (cy - a[1]) * ny > 0) { nx = -nx; ny = -ny; }
+            d = Math.max(d, (x - a[0]) * nx + (y - a[1]) * ny);
+        }
+        return d;
+    }
 
     static final CapeArt MIDNIGHT = (x, y, t) -> {
         int c = mix(rgb(0x060A1C), rgb(0x1E1450), y);
@@ -595,7 +625,7 @@ public final class StarterCosmetics {
 
     static List<Def> starters() {
         List<Def> out = new ArrayList<>();
-        out.add(cape("cape-aether", "Aether", "rare", "The client's own cape, in the brand gradient.", AETHER, rgb(0xC9D3FF), 1, 0));
+        out.add(cape("cape-kite", "Kite", "rare", "The client's own cape, in the brand gradient.", KITE, rgb(0xC9D3FF), 1, 0));
         out.add(cape("cape-midnight", "Midnight", "rare", "A starry night sky with a crescent moon.", MIDNIGHT, rgb(0xB9C0D8), 1, 0));
         out.add(cape("cape-aurora", "Aurora", "epic", "Animated northern lights over a starry sky.", AURORA, rgb(0x2FD3B0), 24, 90));
         out.add(cape("cape-ember", "Ember", "epic", "Animated flames with drifting embers.", EMBER, rgb(0x2A0A06), 16, 70));
@@ -961,8 +991,8 @@ public final class StarterCosmetics {
                     { 4, -2, -2, 4, 12, 4, 0xC89F7F }, { -3.9, 12, -2, 4, 12, 4, 0x3A3F63 }, { -0.1, 12, -2, 4, 12, 4, 0x3A3F63 } };
             if (withPlayer) for (double[] b : boxes) box(color, depth, yaw, b);
             if (d.model != null) {
-                String json = gg.aether.core.Json.write(d.json);
-                Object parts = gg.aether.core.Json.parseObject(json).get("parts");
+                String json = gg.kite.core.Json.write(d.json);
+                Object parts = gg.kite.core.Json.parseObject(json).get("parts");
                 CosmeticModel model = CosmeticModel.parse(parts, d.model.uvW, d.model.uvH);
                 Mesh mesh = model.mesh(new CosmeticModel.Motion((float) age, 0, false));
                 for (CosmeticModel.Bone bone : CosmeticModel.Bone.values()) {
@@ -982,7 +1012,7 @@ public final class StarterCosmetics {
                 part.put("pivot", nums(v(0, 0, 2)));
                 part.put("rotation", nums(v(-8, 180, 0)));
                 part.put("cubes", Arrays.asList(cube));
-                CosmeticModel model = CosmeticModel.parse(gg.aether.core.Json.parseObject(gg.aether.core.Json.write(Map.of("p", Arrays.asList(part)))).get("p"), 64, 32);
+                CosmeticModel model = CosmeticModel.parse(gg.kite.core.Json.parseObject(gg.kite.core.Json.write(Map.of("p", Arrays.asList(part)))).get("p"), 64, 32);
                 BufferedImage frame = d.texture.getSubimage(0, 0, d.texture.getWidth(), d.texture.getWidth() / 2);
                 quads(color, depth, yaw, model.mesh(new CosmeticModel.Motion()).layer(CosmeticModel.Bone.BODY, false), BONES[1], frame, false);
             }

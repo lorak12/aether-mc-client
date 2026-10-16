@@ -9,7 +9,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - run: npm --prefix launcher/ui ci || npm --prefix launcher/ui install
       - run: npm --prefix launcher/ui run build
-      - run: cargo test -p aether-core
+      - run: cargo test -p kite-core
   backend:
     runs-on: ubuntu-latest
     steps:
