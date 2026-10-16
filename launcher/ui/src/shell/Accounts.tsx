@@ -137,7 +137,7 @@ export function AddAccountModal({ open, onClose, mode: initial = "microsoft" }: 
               Use a code instead
             </button>
             <p className="hint">The code option lets you sign in on your phone or another computer.</p>
-            {app.cfg?.login === false && <p className="hint">Microsoft sign-in isn't configured. Add azure_client_id to aether.config.json and restart the launcher.</p>}
+            {app.cfg?.login === false && <p className="hint">Microsoft sign-in isn't configured. Add azure_client_id to kite.config.json and restart the launcher.</p>}
           </div>
         )
       ) : (

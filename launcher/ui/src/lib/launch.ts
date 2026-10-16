@@ -1,7 +1,7 @@
 /** What each `launch-progress` stage means, for the Home progress bar and the launch notification. */
 export const STAGES: Record<string, string> = {
   account: "Signing in",
-  "aether-client": "Installing the Kite client",
+  "kite-client": "Installing the Kite client",
   version: "Fetching version info",
   java: "Downloading Java",
   loader: "Installing the mod loader",

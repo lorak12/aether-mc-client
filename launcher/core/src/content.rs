@@ -73,7 +73,7 @@ fn content_ext_ok(kind: ProjectType, name: &str) -> bool {
     }
 }
 
-/// Files in mods / resourcepacks / shaderpacks that aren't in the lock (the Aether client jar excluded).
+/// Files in mods / resourcepacks / shaderpacks that aren't in the lock (the Kite client jar excluded).
 pub fn local_files(game_dir: &Path) -> Vec<LocalFile> {
     let lock = Lock::load(game_dir);
     let mut out = Vec::new();
@@ -539,12 +539,12 @@ mod tests {
 
     #[test]
     fn enable_disable_and_local_files() {
-        let g = std::env::temp_dir().join(format!("aether-content-{}", std::process::id()));
+        let g = std::env::temp_dir().join(format!("kite-content-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&g);
         std::fs::create_dir_all(g.join("mods")).unwrap();
         std::fs::write(g.join("mods/sodium.jar"), b"s").unwrap();
         std::fs::write(g.join("mods/hand.jar"), b"h").unwrap();
-        std::fs::write(g.join("mods/aether-client.jar"), b"a").unwrap();
+        std::fs::write(g.join("mods/kite-client.jar"), b"a").unwrap();
         std::fs::write(g.join("mods/notes.txt"), b"n").unwrap();
         let entry = LockEntry {
             project_id: "AANobbMI".into(),

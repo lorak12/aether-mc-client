@@ -1,6 +1,6 @@
 // UI preferences and UI-side data in localStorage. Storage can be missing or throw (private mode, cleared data),
 // so every read falls back to the default and every write is best-effort.
-const PREFIX = "aether.ui.";
+const PREFIX = "kite.ui.";
 
 export function load<T>(key: string, fallback: T): T {
   try {

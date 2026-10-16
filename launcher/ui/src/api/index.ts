@@ -81,7 +81,7 @@ function invoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T> {
   });
 }
 
-// ---------- Aether backend (through the launcher, which holds the sign-in) ----------
+// ---------- Kite backend (through the launcher, which holds the sign-in) ----------
 function backend<T>(method: "GET" | "POST" | "PUT" | "DELETE", path: string, body?: unknown, auth = true): Promise<T> {
   return invoke<T>("backend_call", { method, path, body: body ?? null, auth });
 }
@@ -134,7 +134,7 @@ export const api = {
   setSettings: (game: GameSettings) => invoke<GameSettings>("set_settings", { game }),
   mcVersions: () => invoke<McVersion[]>("mc_versions"),
   loaderVersions: (loader: Loader, mcVersion: string) => invoke<LoaderVersion[]>("loader_versions", { loader, mcVersion }),
-  aetherVersions: () => invoke<string[]>("aether_versions"),
+  kiteVersions: () => invoke<string[]>("kite_versions"),
   listJavas: () => invoke<JavaInstall[]>("list_javas"),
   probeJava: (path: string) => invoke<JavaInstall>("probe_java", { path }),
 
@@ -215,7 +215,7 @@ export const api = {
   checkUpdate: () => invoke<LauncherUpdate>("check_update", { channel: null }),
   installUpdate: () => invoke<void>("install_update", { channel: null }),
 
-  // ---------- Aether backend ----------
+  // ---------- Kite backend ----------
   backendStatus: () => invoke<BackendStatus>("backend_status"),
   onlineCount: () => backend<{ online: number }>("GET", "/v1/stats", undefined, false).then((r) => r.online),
   news: () => backend<{ news: NewsArticle[] }>("GET", "/v1/news", undefined, false).then((r) => r.news),

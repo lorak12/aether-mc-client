@@ -437,7 +437,7 @@ mod tests {
 
     #[test]
     fn legacy_profile_libraries() {
-        let dir = std::env::temp_dir().join(format!("aether-forge-legacy-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("kite-forge-legacy-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         let jar = dir.join("i.jar");

@@ -245,7 +245,7 @@ mod tests {
 
     #[test]
     fn add_list_remove() {
-        let g = std::env::temp_dir().join(format!("aether-servers-{}", std::process::id()));
+        let g = std::env::temp_dir().join(format!("kite-servers-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&g);
         assert!(list(&g).unwrap().is_empty());
         add(&g, "Hypixel", "mc.hypixel.net").unwrap();

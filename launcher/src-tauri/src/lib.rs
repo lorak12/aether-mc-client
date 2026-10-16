@@ -1,4 +1,4 @@
-//! Tauri shell: thin IPC layer over `aether-core`. All logic lives in the core crate; these modules adapt it to
+//! Tauri shell: thin IPC layer over `kite-core`. All logic lives in the core crate; these modules adapt it to
 //! commands, events, the tray and the OS keychain.
 mod accounts;
 mod content;
@@ -8,12 +8,12 @@ mod online;
 mod profiles;
 mod shell;
 
-use aether_core::backend::Backend;
-use aether_core::config::AppConfig;
-use aether_core::curseforge::CurseForge;
-use aether_core::modrinth::Modrinth;
-use aether_core::profile::{Profile, ProfileStore};
-use aether_core::settings::SettingsStore;
+use kite_core::backend::Backend;
+use kite_core::config::AppConfig;
+use kite_core::curseforge::CurseForge;
+use kite_core::modrinth::Modrinth;
+use kite_core::profile::{Profile, ProfileStore};
+use kite_core::settings::SettingsStore;
 use std::io::Write;
 use std::path::PathBuf;
 use tauri::Manager;
@@ -26,12 +26,12 @@ pub(crate) struct AppState {
     cf: Option<CurseForge>,
     backend: Option<Backend>,
     /// Device-code login in progress.
-    pending_login: Mutex<Option<aether_core::auth::DeviceCode>>,
+    pending_login: Mutex<Option<kite_core::auth::DeviceCode>>,
     /// Browser login in progress: set to cancel it.
     login_cancel: std::sync::Mutex<Option<tokio::sync::oneshot::Sender<()>>>,
     /// The game currently starting or running.
     running: Mutex<Option<game::Running>>,
-    /// Aether backend sign-in, per account uuid.
+    /// Kite backend sign-in, per account uuid.
     token: Mutex<Option<online::CachedToken>>,
     log: std::sync::Mutex<Option<std::fs::File>>,
 }
@@ -51,11 +51,11 @@ impl AppState {
         self.store().game_dir(p)
     }
     fn cf(&self) -> Res<&CurseForge> {
-        self.cf.as_ref().ok_or_else(|| "CurseForge needs an API key: set curseforge_api_key in aether.config.json (Settings > About shows where).".to_string())
+        self.cf.as_ref().ok_or_else(|| "CurseForge needs an API key: set curseforge_api_key in kite.config.json (Settings > About shows where).".to_string())
     }
     /// Append a line to `<root>/logs/launcher.log` (what "Upload logs" shares) and stderr.
     fn log(&self, msg: impl AsRef<str>) {
-        let line = format!("[{}] {}", aether_core::gamefiles::timestamp(now_unix()), msg.as_ref());
+        let line = format!("[{}] {}", kite_core::gamefiles::timestamp(now_unix()), msg.as_ref());
         eprintln!("{line}");
         if let Ok(mut f) = self.log.lock() {
             if let Some(f) = f.as_mut() {
@@ -115,11 +115,11 @@ pub(crate) fn show_main(app: &tauri::AppHandle) {
 fn build_tray(app: &tauri::App) -> tauri::Result<()> {
     use tauri::menu::{Menu, MenuItem};
     use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-    let show = MenuItem::with_id(app, "show", "Show Aether", true, None::<&str>)?;
+    let show = MenuItem::with_id(app, "show", "Show Kite", true, None::<&str>)?;
     let stop = MenuItem::with_id(app, "stop", "Stop the game", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&show, &stop, &quit])?;
-    let mut tray = TrayIconBuilder::with_id("main").tooltip("Aether").menu(&menu).show_menu_on_left_click(false);
+    let mut tray = TrayIconBuilder::with_id("main").tooltip("Kite").menu(&menu).show_menu_on_left_click(false);
     if let Some(icon) = app.default_window_icon() {
         tray = tray.icon(icon.clone());
     }
@@ -157,7 +157,7 @@ pub fn run() {
         profiles::set_settings,
         profiles::mc_versions,
         profiles::loader_versions,
-        profiles::aether_versions,
+        profiles::kite_versions,
         profiles::list_javas,
         profiles::probe_java,
         // content
@@ -248,7 +248,7 @@ pub fn run() {
                 running: Mutex::new(None),
                 token: Mutex::new(None),
             };
-            state.log(format!("Aether {} starting; data folder {}", env!("CARGO_PKG_VERSION"), state.root.display()));
+            state.log(format!("Kite {} starting; data folder {}", env!("CARGO_PKG_VERSION"), state.root.display()));
             state.log(format!(
                 "system: {} {}, {} logical CPUs; backend {}; CurseForge {}",
                 std::env::consts::OS,
@@ -279,5 +279,5 @@ pub fn run() {
             handler(invoke)
         })
         .run(tauri::generate_context!())
-        .expect("error while running Aether");
+        .expect("error while running Kite");
 }

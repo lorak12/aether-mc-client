@@ -286,7 +286,7 @@ mod tests {
 
     #[tokio::test]
     async fn export_writes_overrides_and_index() {
-        let root = std::env::temp_dir().join(format!("aether-export-{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("kite-export-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         let store = ProfileStore::new(&root);
         let p = store.create("Pack", "1.21.11", Loader::Fabric).unwrap();
@@ -331,7 +331,7 @@ mod tests {
 
     #[tokio::test]
     async fn imports_overrides_and_detects_loader() {
-        let root = std::env::temp_dir().join(format!("aether-mrpack-{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("kite-mrpack-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         std::fs::create_dir_all(&root).unwrap();
         let pack = root.join("t.mrpack");

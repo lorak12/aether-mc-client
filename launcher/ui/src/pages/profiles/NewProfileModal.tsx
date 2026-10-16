@@ -5,7 +5,7 @@ import type { Loader, ProfileKind } from "../../api/types";
 import { useApp } from "../../app/store";
 import { Modal } from "../../components/overlays";
 import { Field, Segmented, Spinner } from "../../components/ui";
-import { clientSupported, listText } from "../../lib/versions";
+import { clientSupported, forgeNote, isForgeLike, listText } from "../../lib/versions";
 import { LoaderChoice, LoaderPicker, VersionSelect } from "./pickers";
 
 export function NewProfileModal() {
@@ -67,7 +67,7 @@ export function NewProfileModal() {
     }
   };
 
-  const unsupported = kind === "client" && version && app.aetherVersions.length > 0 && !clientSupported(version, realLoader, app.aetherVersions);
+  const unsupported = kind === "client" && !isForgeLike(realLoader) && version && app.kiteVersions.length > 0 && !clientSupported(version, realLoader, app.kiteVersions);
 
   return (
     <Modal
@@ -128,17 +128,20 @@ export function NewProfileModal() {
                 kind === "client"
                   ? loader === "builtin"
                     ? "Vanilla loads only Kite's built-in mods, nothing from other mod loaders."
-                    : "Kite's built-in mods plus any Fabric or Quilt mods you add."
+                    : isForgeLike(realLoader)
+                      ? forgeNote(realLoader)
+                      : "Kite's built-in mods plus any Fabric or Quilt mods you add."
                   : undefined
               }
             >
               <LoaderPicker kind={kind} value={loader} onChange={setLoader} />
             </Field>
+            {kind === "client" && isForgeLike(realLoader) && <p className="note warning">{forgeNote(realLoader)}</p>}
             {unsupported && (
               <p className="note warning">
-                {clientSupported(version, "fabric", app.aetherVersions)
+                {clientSupported(version, "fabric", app.kiteVersions)
                   ? `Quilt doesn't exist for ${version}. Pick Fabric (the launcher installs Legacy Fabric) to play with Kite's built-in mods.`
-                  : `The Kite client runs on one release of each version: ${listText(app.aetherVersions)}. On ${version} the game starts without Kite's built-in mods.`}
+                  : `The Kite client runs on one release of each version: ${listText(app.kiteVersions)}. On ${version} the game starts without Kite's built-in mods.`}
               </p>
             )}
           </>

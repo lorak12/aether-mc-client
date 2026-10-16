@@ -130,7 +130,7 @@ pub fn build_command(layout: &Layout, version: &VersionJson, installed: &Install
     vars.insert("library_directory", layout.libraries().display().to_string());
     vars.insert("classpath_separator", classpath_sep().into());
     vars.insert("classpath", classpath);
-    vars.insert("launcher_name", "Aether".into());
+    vars.insert("launcher_name", "Kite".into());
     vars.insert("launcher_version", env!("CARGO_PKG_VERSION").into());
     vars.insert("resolution_width", cfg.settings.width.to_string());
     vars.insert("resolution_height", cfg.settings.height.to_string());

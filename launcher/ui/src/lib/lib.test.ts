@@ -67,12 +67,13 @@ describe("versions", () => {
     const p = (kind: string, builtinOnly = false, loader = "fabric") => ({ name: "Create Odyssey", mc_version: "1.21.4", loader, meta: { kind, builtinOnly } }) as unknown as Profile;
     expect(profileLabel(p("client"))).toBe("Kite 1.21.4 with Fabric");
     expect(profileLabel(p("client", true))).toBe("Kite 1.21.4");
+    expect(profileLabel(p("client", false, "neoforge"))).toBe("Minecraft 1.21.4 with NeoForge");
     expect(profileLabel(p("modpack"))).toBe("Create Odyssey 1.21.4");
     expect(profileLabel(p("vanilla", false, "vanilla"))).toBe("Minecraft 1.21.4");
     expect(profileLabel(p("vanilla", false, "forge"))).toBe("Minecraft 1.21.4 with Forge");
   });
 
-  it("knows where the Aether client runs", () => {
+  it("knows where the Kite client runs", () => {
     expect(clientSupported("1.21.11", "quilt", ["1.21.11", "26.3"])).toBe(true);
     expect(clientSupported("1.21.11", "forge", ["1.21.11"])).toBe(false);
     expect(clientSupported("1.20.1", "fabric", ["1.21.11"])).toBe(false);

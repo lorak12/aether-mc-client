@@ -270,7 +270,7 @@ impl CurseForge {
     async fn get<T: serde::de::DeserializeOwned>(&self, path: &str, query: &[(&str, String)]) -> Result<T> {
         let r = self.client.get(format!("{BASE}{path}")).header("x-api-key", &self.key).query(query).send().await?;
         if r.status() == reqwest::StatusCode::FORBIDDEN || r.status() == reqwest::StatusCode::UNAUTHORIZED {
-            return Err(Error::Other("CurseForge rejected the API key. Check curseforge_api_key in aether.config.json.".into()));
+            return Err(Error::Other("CurseForge rejected the API key. Check curseforge_api_key in kite.config.json.".into()));
         }
         Ok(r.error_for_status()?.json().await?)
     }

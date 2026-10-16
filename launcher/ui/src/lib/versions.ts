@@ -51,15 +51,22 @@ export const LOADER_NAMES: Record<Loader, string> = {
   neoforge: "NeoForge",
 };
 
+/** Forge and NeoForge run plain mods only: the Kite client (and its mod suite) has no build for them. */
+export const isForgeLike = (l: Loader) => l === "forge" || l === "neoforge";
+
+/** Shown wherever Forge or NeoForge is picked for a profile. */
+export const forgeNote = (l: Loader) => `${LOADER_NAMES[l]} profiles don't include the Kite mod suite. You get Minecraft with ${LOADER_NAMES[l]} and the mods you add yourself.`;
+
 /**
  * The line under the Launch button:
- * client profiles read "Aether 1.21.4 with Fabric" (or just "Aether 1.21.4" when only built-in mods load),
+ * client profiles read "Kite 1.21.4 with Fabric" (or just "Kite 1.21.4" when only built-in mods load),
  * modpacks read "<pack> 1.20.1", vanilla profiles read "Minecraft 1.21.4" (plus the loader if it has one).
  */
 export function profileLabel(p: Profile): string {
   const m = p.meta;
   if (m.kind === "modpack") return `${p.name} ${p.mc_version}`;
   if (p.loader === "vanilla") return `Minecraft ${p.mc_version}`;
+  if (isForgeLike(p.loader)) return `Minecraft ${p.mc_version} with ${LOADER_NAMES[p.loader]}`;
   if (m.kind === "vanilla") return `Minecraft ${p.mc_version} with ${LOADER_NAMES[p.loader]}`;
   if (m.builtinOnly) return `Kite ${p.mc_version}`;
   return `Kite ${p.mc_version} with ${LOADER_NAMES[p.loader]}`;
@@ -71,7 +78,7 @@ export const isLegacyFabric = (v: string) => {
   return !!m && Number(m[1]) <= 13;
 };
 
-/** Whether the Aether in-game client runs on this version and loader. `supported` comes from the launcher. */
+/** Whether the Kite in-game client runs on this version and loader. `supported` comes from the launcher. */
 export const clientSupported = (v: string, loader: Loader, supported: string[]) =>
   supported.includes(v) && (loader === "fabric" || (loader === "quilt" && !isLegacyFabric(v)));
 

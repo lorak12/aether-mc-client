@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { AppProvider, useApp } from "./app/store";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { CommunityPage } from "./pages/community/Community";
@@ -19,9 +20,18 @@ import { Sidebar } from "./shell/Sidebar";
 import { Toasts } from "./shell/Toasts";
 import { TopBar } from "./shell/TopBar";
 
+function isLogsWindow() {
+  try {
+    if (getCurrentWindow().label === "logs") return true;
+  } catch {
+    /* plain browser */
+  }
+  return new URLSearchParams(location.search).get("view") === "logs";
+}
+
 export function App() {
-  // The live log window loads the same bundle with ?view=logs.
-  if (new URLSearchParams(location.search).get("view") === "logs") return <LogsWindow />;
+  // The live log window loads the same bundle; it is told apart by its window label (or ?view=logs in a plain browser).
+  if (isLogsWindow()) return <ErrorBoundary><LogsWindow /></ErrorBoundary>;
   return (
     <ErrorBoundary>
       <AppProvider>

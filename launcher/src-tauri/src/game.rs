@@ -1,9 +1,9 @@
 //! Launching, stopping and watching the game, plus its logs.
 use crate::accounts::{self, accounts_path, load_accounts, save_accounts};
 use crate::{e, show_main, AppState, Res};
-use aether_core::download::Layout;
-use aether_core::launch::{self, LaunchRequest, QuickPlay};
-use aether_core::settings::{effective, split_args};
+use kite_core::download::Layout;
+use kite_core::launch::{self, LaunchRequest, QuickPlay};
+use kite_core::settings::{effective, split_args};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -69,7 +69,7 @@ fn redacted_command(argv: &[String]) -> String {
 
 fn log_tail(path: &Path, lines: usize) -> String {
     let text = std::fs::read(path).map(|b| String::from_utf8_lossy(&b).into_owned()).unwrap_or_default();
-    let all = aether_core::logs::plain_lines(&text);
+    let all = kite_core::logs::plain_lines(&text);
     all[all.len().saturating_sub(lines)..].join("\n")
 }
 
@@ -180,7 +180,7 @@ async fn start_game(app: &AppHandle, s: &AppState, profile_id: &str, quick_play:
     let quick_play = match quick_play {
         Some(QuickPlayArg::Server(a)) if !a.trim().is_empty() => Some(QuickPlay::Server(a.trim().to_string())),
         Some(QuickPlayArg::World(w)) => {
-            aether_core::gamefiles::safe_name(&w).map_err(e)?;
+            kite_core::gamefiles::safe_name(&w).map_err(e)?;
             if !game_dir.join("saves").join(&w).join("level.dat").exists() {
                 return Err(format!("The world {w} doesn't exist any more"));
             }
@@ -189,28 +189,28 @@ async fn start_game(app: &AppHandle, s: &AppState, profile_id: &str, quick_play:
         _ => None,
     };
 
-    emit("aether-client", 0, 1);
+    emit("kite-client", 0, 1);
     // A newer client build from the signed manifest, when the backend is configured (best effort).
     if let (Some(b), Some(key)) = (&s.backend, &s.cfg.manifest_public_key) {
-        if aether_core::runtime::adapter_for(&profile.mc_version, profile.loader).is_some() {
+        if kite_core::runtime::adapter_for(&profile.mc_version, profile.loader).is_some() {
             let fut = async {
-                let m = aether_core::update::fetch(http, b.base(), "stable", key).await?;
-                aether_core::update::update_runtime(http, &m, &s.root, &profile.mc_version).await
+                let m = kite_core::update::fetch(http, b.base(), "stable", key).await?;
+                kite_core::update::update_runtime(http, &m, &s.root, &profile.mc_version).await
             };
             match tokio::time::timeout(std::time::Duration::from_secs(8), fut).await {
                 Ok(Ok(Some(p))) => s.log(format!("  downloaded client update {}", p.display())),
-                Ok(Ok(None)) => s.log("  Aether client is up to date"),
+                Ok(Ok(None)) => s.log("  Kite client is up to date"),
                 Ok(Err(err)) => s.log(format!("  client update check failed: {err}")),
                 Err(_) => s.log("  client update check timed out (8 s), using the installed build"),
             }
         }
     }
-    // Supported profiles get the Aether in-game client; without a built jar they launch plain.
-    let extra_jvm = aether_core::runtime::prepare_launch(&s.root, &profile, &game_dir).map_err(e)?;
-    if aether_core::runtime::adapter_for(&profile.mc_version, profile.loader).is_some() {
-        s.log(format!("  Aether client: {}", if extra_jvm.is_empty() { "installed into the mods folder" } else { "added with JVM arguments" }));
+    // Supported profiles get the Kite in-game client; without a built jar they launch plain.
+    let extra_jvm = kite_core::runtime::prepare_launch(&s.root, &profile, &game_dir).map_err(e)?;
+    if kite_core::runtime::adapter_for(&profile.mc_version, profile.loader).is_some() {
+        s.log(format!("  Kite client: {}", if extra_jvm.is_empty() { "installed into the mods folder" } else { "added with JVM arguments" }));
     } else {
-        s.log(format!("  Aether client: not available for {} {:?}, launching without it", profile.mc_version, profile.loader));
+        s.log(format!("  Kite client: not available for {} {:?}, launching without it", profile.mc_version, profile.loader));
     }
     let layout = Layout::new(&s.root);
     let wrapper_len = split_args(&settings.wrapper).len();
@@ -244,15 +244,15 @@ async fn start_game(app: &AppHandle, s: &AppState, profile_id: &str, quick_play:
     // Video settings, keybinds and the rest of options.txt follow the player between profiles.
     let share_options = settings.share_options;
     if share_options {
-        let legacy = aether_core::options::is_legacy(&profile.mc_version);
+        let legacy = kite_core::options::is_legacy(&profile.mc_version);
         let seeds: Vec<PathBuf> = store
             .list()
             .unwrap_or_default()
             .iter()
-            .filter(|p| p.id != profile.id && aether_core::options::is_legacy(&p.mc_version) == legacy)
+            .filter(|p| p.id != profile.id && kite_core::options::is_legacy(&p.mc_version) == legacy)
             .map(|p| s.game_dir(p).join("options.txt"))
             .collect();
-        match aether_core::options::push(&s.root, &game_dir, &profile.mc_version, &seeds) {
+        match kite_core::options::push(&s.root, &game_dir, &profile.mc_version, &seeds) {
             Ok(_) => s.log("  shared game options applied"),
             Err(err) => s.log(format!("  shared game options: {err}")),
         }
@@ -272,15 +272,15 @@ async fn start_game(app: &AppHandle, s: &AppState, profile_id: &str, quick_play:
         .envs(hook_env.iter().map(|(k, v)| (k.as_str(), v.as_str())));
     // The in-game client syncs cosmetics and the client badge with the same backend.
     if let Some(url) = &s.cfg.backend_url {
-        cmd.env("AETHER_BACKEND_URL", url);
+        cmd.env("KITE_BACKEND_URL", url);
     }
     // The in-game account switcher lists the saved accounts (names/uuids only, no tokens) and asks for a relaunch
     // by writing the chosen uuid to the relaunch file before quitting.
     let _ = save_accounts(&s.root, &load_accounts(&s.root));
     let relaunch_path = s.root.join("relaunch.json");
     let _ = std::fs::remove_file(&relaunch_path);
-    cmd.env("AETHER_ACCOUNTS_FILE", accounts_path(&s.root));
-    cmd.env("AETHER_RELAUNCH_FILE", &relaunch_path);
+    cmd.env("KITE_ACCOUNTS_FILE", accounts_path(&s.root));
+    cmd.env("KITE_RELAUNCH_FILE", &relaunch_path);
     // Live switching (see SessionBridge); without it the game falls back to the relaunch file.
     let bridge = match accounts::start_session_bridge(app.clone()) {
         Ok(b) => Some(b),
@@ -290,8 +290,8 @@ async fn start_game(app: &AppHandle, s: &AppState, profile_id: &str, quick_play:
         }
     };
     if let Some(b) = &bridge {
-        cmd.env("AETHER_SESSION_PORT", b.port.to_string());
-        cmd.env("AETHER_SESSION_KEY", &b.key);
+        cmd.env("KITE_SESSION_PORT", b.port.to_string());
+        cmd.env("KITE_SESSION_KEY", &b.key);
     }
     let started = std::time::SystemTime::now();
     let mut child = cmd.spawn().map_err(|err| {
@@ -327,7 +327,7 @@ async fn start_game(app: &AppHandle, s: &AppState, profile_id: &str, quick_play:
         let state = app.state::<AppState>();
         let was_killed = killed.load(Ordering::Relaxed);
         if share_options {
-            if let Err(err) = aether_core::options::pull(&state.root, &game_dir, &mc_version) {
+            if let Err(err) = kite_core::options::pull(&state.root, &game_dir, &mc_version) {
                 state.log(format!("shared game options: {err}"));
             }
         }
@@ -429,7 +429,7 @@ pub async fn read_game_log(s: State<'_, AppState>, offset: u64, profile_id: Opti
     f.read_to_end(&mut buf).map_err(e)?;
     // Only hand out complete lines; the rest is read next time.
     let end = buf.iter().rposition(|&b| b == b'\n').map(|i| i + 1).unwrap_or(0);
-    let lines = aether_core::logs::plain_lines(&String::from_utf8_lossy(&buf[..end])).into_iter().filter(|l| !l.trim().is_empty()).collect();
+    let lines = kite_core::logs::plain_lines(&String::from_utf8_lossy(&buf[..end])).into_iter().filter(|l| !l.trim().is_empty()).collect();
     Ok(LogChunk { lines, offset: start + end as u64, profile_id: Some(id) })
 }
 
@@ -446,7 +446,7 @@ pub struct UploadedLogs {
 pub async fn upload_logs(s: State<'_, AppState>, profile_id: Option<String>) -> Res<UploadedLogs> {
     let http = s.api.http();
     let launcher_text = std::fs::read_to_string(s.root.join("logs").join("launcher.log")).unwrap_or_default();
-    let launcher = if launcher_text.trim().is_empty() { None } else { Some(aether_core::logs::upload(http, &launcher_text).await.map_err(e)?) };
+    let launcher = if launcher_text.trim().is_empty() { None } else { Some(kite_core::logs::upload(http, &launcher_text).await.map_err(e)?) };
     let mut game = None;
     let mut profile = None;
     let id = match profile_id {
@@ -458,9 +458,9 @@ pub async fn upload_logs(s: State<'_, AppState>, profile_id: Option<String>) -> 
         let logs = s.game_dir(&p).join("logs");
         let path = [logs.join("latest.log"), logs.join("launcher-output.log")].into_iter().find(|p| p.exists());
         if let Some(path) = path {
-            let text = aether_core::logs::plain_lines(&std::fs::read_to_string(path).unwrap_or_default()).join("\n");
+            let text = kite_core::logs::plain_lines(&std::fs::read_to_string(path).unwrap_or_default()).join("\n");
             if !text.trim().is_empty() {
-                game = Some(aether_core::logs::upload(http, &text).await.map_err(e)?);
+                game = Some(kite_core::logs::upload(http, &text).await.map_err(e)?);
                 profile = Some(p.name);
             }
         }

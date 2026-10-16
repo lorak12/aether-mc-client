@@ -154,7 +154,7 @@ export function ContentPage({ kind: initialKind, q: initialQ }: { kind?: Kind; q
             <EmptyState
               icon={<IPuzzle size={22} />}
               title="CurseForge needs an API key"
-              text="CurseForge only allows apps with a key. Get one at console.curseforge.com, put it in aether.config.json as curseforge_api_key and restart the launcher."
+              text="CurseForge only allows apps with a key. Get one at console.curseforge.com, put it in kite.config.json as curseforge_api_key and restart the launcher."
               action={
                 <div className="row">
                   <button className="btn" onClick={() => api.openPath("config-file").catch(app.error)}>

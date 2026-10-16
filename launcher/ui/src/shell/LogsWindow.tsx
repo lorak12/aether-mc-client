@@ -1,12 +1,48 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { api, errText } from "../api";
-import { ICopy, IFolder, ISearch, ITrash } from "../components/Icons";
+import { ICheck, ICopy, IFolder, ISearch, ITrash } from "../components/Icons";
 import { Logo, Segmented, Toggle } from "../components/ui";
+import { type Level, type Parsed, type Seg, parseLine, plainText } from "../lib/logline";
 import { WindowControls } from "./WindowControls";
 
-type Level = "info" | "warn" | "error";
-const levelOf = (l: string): Level => (/\b(ERROR|FATAL|Exception|Caused by)\b|\/ERROR\]/.test(l) ? "error" : /\bWARN(ING)?\b|\/WARN\]/.test(l) ? "warn" : "info");
 const MAX = 5000;
+
+type Row = Parsed & { i: number; plain: string };
+
+const segStyle = (s: Seg): React.CSSProperties | undefined => {
+  const st = s.style;
+  if (!st) return undefined;
+  const deco = [st.underline && "underline", st.strike && "line-through"].filter(Boolean).join(" ");
+  return { color: st.color, fontWeight: st.bold ? 700 : undefined, fontStyle: st.italic ? "italic" : undefined, textDecoration: deco || undefined };
+};
+
+function Segs({ segs, level }: { segs: Seg[]; level: Level }) {
+  return (
+    <>
+      {segs.map((s, k) =>
+        s.href ? (
+          <a
+            key={k}
+            className="lg-link"
+            href={s.href}
+            style={segStyle(s)}
+            title={`Open ${s.href}`}
+            onClick={(e) => {
+              e.preventDefault();
+              api.openUrl(s.href!).catch(() => {});
+            }}
+          >
+            {s.text}
+          </a>
+        ) : (
+          <span key={k} className={s.kind ? (s.kind === "level" ? `lg-level ${level}` : `lg-${s.kind}`) : undefined} style={segStyle(s)}>
+            {s.text}
+          </span>
+        ),
+      )}
+    </>
+  );
+}
 
 /** Second window: the running game's output, streamed from the profile's launcher-output.log. */
 export function LogsWindow() {
@@ -44,10 +80,30 @@ export function LogsWindow() {
     };
   }, []);
 
+  const rows = useMemo<Row[]>(() => {
+    let prev: Level | undefined;
+    return lines.map((raw, i) => {
+      const p = parseLine(raw, prev);
+      prev = p.level;
+      return { ...p, i, plain: plainText(raw) };
+    });
+  }, [lines]);
+
   const shown = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return lines.map((text, i) => ({ text, i, level: levelOf(text) })).filter((l) => (filter === "all" || l.level === filter) && (!needle || l.text.toLowerCase().includes(needle)));
-  }, [lines, filter, q]);
+    const want = (l: Level) => filter === "all" || l === filter || (filter === "info" && l === "debug");
+    return rows.filter((r) => want(r.level) && (!needle || r.plain.toLowerCase().includes(needle)));
+  }, [rows, filter, q]);
+
+  const [copied, setCopied] = useState<number | null>(null);
+  const copiedTimer = useRef<ReturnType<typeof setTimeout>>();
+  const copyLine = (r: Row) => {
+    navigator.clipboard?.writeText(r.plain).then(() => {
+      setCopied(r.i);
+      clearTimeout(copiedTimer.current);
+      copiedTimer.current = setTimeout(() => setCopied(null), 1200);
+    });
+  };
 
   useEffect(() => {
     if (follow && box.current) box.current.scrollTop = box.current.scrollHeight;
@@ -55,12 +111,9 @@ export function LogsWindow() {
 
   const counts = useMemo(() => {
     const c = { warn: 0, error: 0 };
-    for (const l of lines) {
-      const lv = levelOf(l);
-      if (lv !== "info") c[lv]++;
-    }
+    for (const r of rows) if (r.level === "warn" || r.level === "error") c[r.level]++;
     return c;
-  }, [lines]);
+  }, [rows]);
 
   return (
     <div className="logs-win">
@@ -93,7 +146,7 @@ export function LogsWindow() {
         <label className="row small">
           <Toggle on={follow} onChange={setFollow} label="Follow output" /> Follow
         </label>
-        <button className="icon-btn" title="Copy shown lines" aria-label="Copy shown lines" onClick={() => navigator.clipboard?.writeText(shown.map((l) => l.text).join("\n"))}>
+        <button className="icon-btn" title="Copy shown lines" aria-label="Copy shown lines" onClick={() => navigator.clipboard?.writeText(shown.map((r) => r.plain).join("\n"))}>
           <ICopy size={17} />
         </button>
         <button className="icon-btn" title="Open logs folder" aria-label="Open logs folder" disabled={!profile} onClick={() => api.openPath("client-logs", profile).catch(() => {})}>
@@ -116,10 +169,17 @@ export function LogsWindow() {
         {shown.length === 0 ? (
           <p className="logs-empty">{lines.length ? "No lines match the filter." : profile ? "Waiting for output…" : "Start a game from the launcher to see its output here."}</p>
         ) : (
-          shown.map((l) => (
-            <div key={l.i} className={`log-line ${l.level}`}>
-              <span className="ln">{l.i + 1}</span>
-              <span>{l.text}</span>
+          shown.map((r) => (
+            <div key={r.i} className={`log-line ${r.level}${r.trace ? " trace" : ""}${copied === r.i ? " copied" : ""}`}>
+              <button className="ln" title="Copy line" aria-label={`Copy line ${r.i + 1}`} onClick={() => copyLine(r)}>
+                {r.i + 1}
+              </button>
+              <span className="lg-text">
+                <Segs segs={r.segs} level={r.level} />
+              </span>
+              <button className="lg-copy" title="Copy line" aria-label={`Copy line ${r.i + 1}`} onClick={() => copyLine(r)}>
+                {copied === r.i ? <ICheck size={13} /> : <ICopy size={13} />}
+              </button>
             </div>
           ))
         )}

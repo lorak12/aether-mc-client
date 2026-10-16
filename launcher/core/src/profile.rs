@@ -32,7 +32,7 @@ impl Loader {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum ProfileKind {
-    /// Runs the Aether client (Fabric/Quilt on a supported version).
+    /// Runs the Kite client (Fabric/Quilt on a supported version).
     #[default]
     Client,
     Vanilla,
@@ -47,7 +47,7 @@ pub struct ProfileMeta {
     pub description: String,
     /// A CSS background (gradient), or `file:<name>` for an image in the profile folder.
     pub cover: Option<String>,
-    /// Client profiles only: load just the Aether client, not the other jars in `mods/`.
+    /// Client profiles only: load just the Kite client, not the other jars in `mods/`.
     pub builtin_only: bool,
     /// Unix milliseconds.
     pub last_played: Option<u64>,
@@ -281,7 +281,7 @@ mod tests {
     use super::*;
 
     fn tmp(tag: &str) -> PathBuf {
-        let d = std::env::temp_dir().join(format!("aether-prof-{tag}-{}", std::process::id()));
+        let d = std::env::temp_dir().join(format!("kite-prof-{tag}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&d);
         d
     }
@@ -337,7 +337,7 @@ mod tests {
         assert_eq!(s.game_dir(&p), s.dir("x"));
         p.game_dir = Some("relative/dir".into());
         assert_eq!(s.game_dir(&p), s.dir("x"));
-        let abs = std::env::temp_dir().join("aether-custom");
+        let abs = std::env::temp_dir().join("kite-custom");
         p.game_dir = Some(abs.display().to_string());
         assert_eq!(s.game_dir(&p), abs);
     }

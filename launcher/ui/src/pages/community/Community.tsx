@@ -56,8 +56,8 @@ function Messages({ friendId }: { friendId?: string }) {
   // New messages arrive through the app's poll; refresh the list order when they do.
   useEffect(() => {
     const h = () => threads.reload();
-    window.addEventListener("aether:messages", h);
-    return () => window.removeEventListener("aether:messages", h);
+    window.addEventListener("kite:messages", h);
+    return () => window.removeEventListener("kite:messages", h);
   }, [threads.reload]);
 
   const list = useMemo(() => {
@@ -148,8 +148,8 @@ function Conversation({ friend: f, onSent }: { friend: Friend; onSent: () => voi
       });
       markThreadRead(f.uuid);
     };
-    window.addEventListener("aether:messages", h);
-    return () => window.removeEventListener("aether:messages", h);
+    window.addEventListener("kite:messages", h);
+    return () => window.removeEventListener("kite:messages", h);
   }, [f.uuid, msgs.setData]);
 
   useEffect(() => {

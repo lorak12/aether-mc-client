@@ -1,5 +1,5 @@
 /* ============================================================
-   Aether launcher. Tokens come from brand/tokens.json (tokens.css).
+   Kite launcher. Tokens come from brand/tokens.json (tokens.css).
    ============================================================ */
 
 /* ---------- base ---------- */
@@ -831,11 +831,31 @@ kbd { font-family: var(--font-ui); font-size: 10.5px; padding: 1px 5px; border-r
 .logs-tools { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--c-line); }
 .logs-err { padding: 8px 14px; color: var(--c-danger); font-size: 12px; }
 .logs-box { overflow: auto; padding: 8px 0; font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 12px; line-height: 1.55; }
-.log-line { display: flex; gap: 14px; padding: 0 14px; white-space: pre-wrap; word-break: break-word; }
-.log-line:hover { background: rgba(255,255,255,.03); }
-.log-line .ln { color: #4b5466; width: 42px; text-align: right; flex: none; user-select: none; }
+.log-line { position: relative; display: flex; gap: 14px; padding: 0 34px 0 14px; color: #c9d1dd; white-space: pre-wrap; word-break: break-word; transition: background .25s var(--ease); }
+.log-line:hover { background: rgba(255,255,255,.035); }
+.log-line .ln { all: unset; color: #4b5466; width: 42px; text-align: right; flex: none; user-select: none; cursor: copy; border-radius: 3px; }
+.log-line .ln:hover { color: var(--c-text); }
+.log-line .ln:focus-visible, .lg-copy:focus-visible { outline: 2px solid var(--c-accent, #4dc4ff); outline-offset: 1px; }
+.lg-text { flex: 1; min-width: 0; }
+.lg-copy { all: unset; position: absolute; right: 10px; top: 1px; display: grid; place-items: center; width: 20px; height: 18px; border-radius: 4px; color: #6b7487; cursor: pointer; opacity: 0; transition: opacity .12s; }
+.log-line:hover .lg-copy, .lg-copy:focus-visible, .log-line.copied .lg-copy { opacity: 1; }
+.lg-copy:hover { color: var(--c-text); background: rgba(255,255,255,.08); }
+.log-line.copied { background: rgba(85,255,140,.07); }
+.log-line.copied .lg-copy { color: var(--c-success); }
+.log-line.debug { color: #8a93a5; }
 .log-line.warn { color: #ffd98a; }
 .log-line.error { color: #ff9aa4; background: rgba(255,93,108,.05); }
+.log-line.trace .lg-text { padding-left: 2ch; opacity: .8; }
+.lg-time { color: #5d6678; }
+.lg-thread { color: #7f8aa3; }
+.lg-logger { color: #9a86d6; }
+.lg-level { font-weight: 700; color: #6fb8ff; }
+.lg-level.debug { color: #7f8aa3; }
+.lg-level.warn { color: #ffc24d; }
+.lg-level.error { color: #ff5d6c; }
+.lg-exc { color: #ff7b86; font-weight: 600; }
+.lg-link { color: #6cc6ff; text-decoration: underline; text-decoration-color: rgba(108,198,255,.4); text-underline-offset: 2px; cursor: pointer; }
+.lg-link:hover { text-decoration-color: currentColor; color: #9bd8ff; }
 .logs-empty { padding: 30px; text-align: center; color: var(--c-text-muted); font-family: var(--font-ui); }
 
 /* ---------- responsive ---------- */

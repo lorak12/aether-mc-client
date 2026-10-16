@@ -1,13 +1,13 @@
 //! Accounts: Microsoft sign-in (browser or device code), dev offline accounts, the saved-accounts registry over the OS
 //! keychain, and the loopback bridge the running game uses to switch accounts live.
 use crate::{e, random_hex, AppState, Res};
-use aether_core::auth::{self, DeviceCode};
-use aether_core::launch::Session;
+use kite_core::auth::{self, DeviceCode};
+use kite_core::launch::Session;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use tauri::{AppHandle, Emitter, Manager, State};
 
-const KEYRING_SERVICE: &str = "aether-launcher";
+const KEYRING_SERVICE: &str = "kite-launcher";
 /// Windows Credential Manager caps a secret at 2560 bytes; Microsoft refresh tokens can exceed that, so store in chunks.
 const KEYRING_CHUNK: usize = 2000;
 
@@ -228,7 +228,7 @@ async fn read_redirect(stream: &mut tokio::net::TcpStream) -> Option<String> {
     let target = req.lines().next()?.split_whitespace().nth(1)?.to_string();
     let query = target.split_once('?').map(|(_, q)| q.to_string());
     let ok = query.as_deref().is_some_and(|q| q.contains("code="));
-    let (title, text) = if ok { ("You're signed in", "You can close this tab and go back to Kite Client.") } else { ("Sign-in didn't finish", "Go back to Aether and try again.") };
+    let (title, text) = if ok { ("You're signed in", "You can close this tab and go back to Kite Client.") } else { ("Sign-in didn't finish", "Go back to Kite and try again.") };
     let body = DONE_PAGE.replace("%TITLE%", title).replace("%TEXT%", text);
     let resp = format!("HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}", body.len());
     let _ = stream.write_all(resp.as_bytes()).await;
@@ -371,7 +371,7 @@ pub fn account_name(s: State<AppState>) -> Option<String> {
 
 /// While the game runs, a loopback-only endpoint hands it a fresh session for one of the saved accounts, so the
 /// in-game account switcher swaps accounts without a restart. The game gets the port and a per-launch secret through
-/// AETHER_SESSION_PORT / AETHER_SESSION_KEY and sends one JSON line `{"key", "uuid"}`; the reply is one JSON line
+/// KITE_SESSION_PORT / KITE_SESSION_KEY and sends one JSON line `{"key", "uuid"}`; the reply is one JSON line
 /// `{"ok", "username", "uuid", "token", "kind"}` or `{"ok": false, "error"}`.
 pub struct SessionBridge {
     pub port: u16,

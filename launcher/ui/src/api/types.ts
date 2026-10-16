@@ -285,7 +285,7 @@ export interface BackendStatus {
   error: string | null;
 }
 
-// ---------- Aether backend ----------
+// ---------- Kite backend ----------
 export type Presence = "online" | "away" | "busy" | "invisible" | "offline";
 export interface Friend {
   /** The friend's uuid (also used in routes). */
@@ -342,7 +342,7 @@ export interface NewsArticle {
   size: "lg" | "wide" | "sm";
   link?: string;
 }
-/** A curated server from the Aether service. */
+/** A curated server from the Kite service. */
 export interface Server {
   id: string;
   name: string;

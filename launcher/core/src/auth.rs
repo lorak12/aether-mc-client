@@ -48,7 +48,7 @@ fn azure_error_message(desc: &str) -> String {
          Advanced settings, set \"Allow public client flows\" to Yes, save, and try again."
             .into()
     } else if desc.contains("AADSTS700016") {
-        "Azure doesn't recognise this client id. Check azure_client_id in aether.config.json.".into()
+        "Azure doesn't recognise this client id. Check azure_client_id in kite.config.json.".into()
     } else if desc.contains("AADSTS50059") || desc.contains("AADSTS9002346") || desc.contains("AADSTS50194") {
         "Your Azure app must allow personal Microsoft accounts (Supported account types: \"...and personal Microsoft accounts\").".into()
     } else {

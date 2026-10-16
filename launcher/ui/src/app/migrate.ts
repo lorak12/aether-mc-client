@@ -2,7 +2,7 @@ import { api } from "../api";
 import type { GameSettings, Overrides, Profile, ProfileMeta } from "../api/types";
 import { load, save } from "../lib/prefs";
 
-const PREFIX = "aether.ui.";
+const PREFIX = "kite.ui.";
 const DONE = "migrated.v2";
 
 /** What launcher versions before profile format 2 kept per profile in the webview. */

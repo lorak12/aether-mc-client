@@ -118,7 +118,7 @@ export function useInstaller(onInstalled?: (profileId: string) => void) {
   const start = useCallback(
     (item: InstallItem, quick = false) => {
       if (item.provider === "curseforge" && !app.cfg?.curseforge) {
-        app.toast("CurseForge needs an API key. Add curseforge_api_key to aether.config.json (Settings > About).", { tone: "error" });
+        app.toast("CurseForge needs an API key. Add curseforge_api_key to kite.config.json (Settings > About).", { tone: "error" });
         return;
       }
       if (quick && item.kind === "modpack") return void installModpack(item, null);

@@ -135,12 +135,12 @@ pub async fn download(http: &reqwest::Client, d: &Download, dest: &Path) -> Resu
     Ok(())
 }
 
-/// Fetch a newer Aether client jar for `mc` into `<data root>/runtime/` (where `runtime::find_jar` looks).
+/// Fetch a newer Kite client jar for `mc` into `<data root>/runtime/` (where `runtime::find_jar` looks).
 /// Returns the new jar, or `None` if the manifest has nothing newer than what's there.
 pub async fn update_runtime(http: &reqwest::Client, m: &Manifest, data_root: &Path, mc: &str) -> Result<Option<PathBuf>> {
     let Some(d) = m.runtime.get(mc) else { return Ok(None) };
     let dir = data_root.join("runtime");
-    let dest = dir.join(format!("aether-{mc}-{}.jar", d.version));
+    let dest = dir.join(format!("kite-{mc}-{}.jar", d.version));
     if dest.exists() {
         return Ok(None);
     }
@@ -149,7 +149,7 @@ pub async fn update_runtime(http: &reqwest::Client, m: &Manifest, data_root: &Pa
     if let Ok(rd) = std::fs::read_dir(&dir) {
         for e in rd.flatten() {
             let n = e.file_name().to_string_lossy().to_string();
-            if n.starts_with(&format!("aether-{mc}-")) && e.path() != dest {
+            if n.starts_with(&format!("kite-{mc}-")) && e.path() != dest {
                 let _ = std::fs::remove_file(e.path());
             }
         }

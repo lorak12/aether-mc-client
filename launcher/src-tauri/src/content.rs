@@ -1,11 +1,11 @@
 //! Content: search, project pages, installs, updates, enable/disable, pack import and export.
 //! Most commands take a `provider` ("modrinth" by default, or "curseforge").
 use crate::{e, AppState, Res};
-use aether_core::content::{self, Installer, Lock, LockEntry, LocalFile, Source};
-use aether_core::curseforge;
-use aether_core::modrinth::{Project, ProjectType, SearchQuery, SearchResponse, Version};
-use aether_core::mrpack::{self, ExportOptions, ExportReport};
-use aether_core::profile::Profile;
+use kite_core::content::{self, Installer, Lock, LockEntry, LocalFile, Source};
+use kite_core::curseforge;
+use kite_core::modrinth::{Project, ProjectType, SearchQuery, SearchResponse, Version};
+use kite_core::mrpack::{self, ExportOptions, ExportReport};
+use kite_core::profile::Profile;
 use serde::Serialize;
 use tauri::State;
 
@@ -152,7 +152,7 @@ pub async fn install_modpack(s: State<'_, AppState>, project_id: String, version
             return Err("This modpack's author doesn't allow downloads outside CurseForge.".into());
         };
         let path = tmp.join(format!("cf-{}.zip", file.id));
-        aether_core::download::fetch_verified(cf.http(), url, &path, sha1).await.map_err(e)?;
+        kite_core::download::fetch_verified(cf.http(), url, &path, sha1).await.map_err(e)?;
         let r = curseforge::import(cf, &s.store(), &path).await.map_err(e);
         let _ = std::fs::remove_file(&path);
         return r;
@@ -166,7 +166,7 @@ pub async fn install_modpack(s: State<'_, AppState>, project_id: String, version
     };
     let file = version.primary_file().ok_or("This modpack version has no file")?;
     let path = tmp.join(format!("{}.mrpack", version.id));
-    aether_core::download::fetch_verified(s.api.http(), &file.url, &path, &file.hashes.sha1).await.map_err(e)?;
+    kite_core::download::fetch_verified(s.api.http(), &file.url, &path, &file.hashes.sha1).await.map_err(e)?;
     let result = import_mrpack_file(&s, &path).await;
     let _ = std::fs::remove_file(&path);
     result
@@ -179,7 +179,7 @@ async fn import_mrpack_file(s: &AppState, path: &std::path::Path) -> Res<Profile
         if let Some(key) = mrpack::loader_key(p.loader) {
             p.loader_version = idx.dependencies.get(key).cloned();
         }
-        p.meta.kind = aether_core::profile::ProfileKind::Modpack;
+        p.meta.kind = kite_core::profile::ProfileKind::Modpack;
         let _ = s.store().save(&p);
     }
     if let Err(err) = content::adopt_local_files(&s.api, &s.game_dir(&p)).await {
@@ -310,11 +310,11 @@ pub async fn export_mrpack(s: State<'_, AppState>, profile_id: String, dest: Str
     // The pack needs a concrete loader version.
     let lv = match (&p.loader_version, p.loader) {
         (Some(v), _) => Some(v.clone()),
-        (None, aether_core::profile::Loader::Vanilla) => None,
-        (None, aether_core::profile::Loader::Forge | aether_core::profile::Loader::NeoForge) => {
-            aether_core::forge::recommended(s.api.http(), p.loader, &p.mc_version).await.map_err(e)?
+        (None, kite_core::profile::Loader::Vanilla) => None,
+        (None, kite_core::profile::Loader::Forge | kite_core::profile::Loader::NeoForge) => {
+            kite_core::forge::recommended(s.api.http(), p.loader, &p.mc_version).await.map_err(e)?
         }
-        (None, l) => aether_core::loader::versions(s.api.http(), l, &p.mc_version).await.map_err(e)?.into_iter().find(|v| v.stable).map(|v| v.version),
+        (None, l) => kite_core::loader::versions(s.api.http(), l, &p.mc_version).await.map_err(e)?.into_iter().find(|v| v.stable).map(|v| v.version),
     };
     let dest = std::path::PathBuf::from(dest);
     let dest = if dest.extension().is_some_and(|x| x == "mrpack") { dest } else { dest.with_extension("mrpack") };

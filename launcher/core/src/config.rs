@@ -1,14 +1,14 @@
 //! App-level configuration. All secrets/ids are optional so everything compiles and runs without them;
 //! features that need a missing value return `Error::Other("... not configured")`.
 //!
-//! Sources, highest priority first: environment variables, `aether.config.json` in the data root.
-//!   AETHER_AZURE_CLIENT_ID, AETHER_CURSEFORGE_API_KEY, AETHER_BACKEND_URL
+//! Sources, highest priority first: environment variables, `kite.config.json` in the data root.
+//!   KITE_AZURE_CLIENT_ID, KITE_CURSEFORGE_API_KEY, KITE_BACKEND_URL
 use crate::{Error, Result};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
 /// Modrinth asks for a User-Agent that identifies the project and how to reach its maintainers.
-pub const USER_AGENT: &str = concat!("lorak12/aether-mc-client/", env!("CARGO_PKG_VERSION"), " (https://github.com/lorak12/aether-mc-client)");
+pub const USER_AGENT: &str = concat!("lorak12/kite-mc-client/", env!("CARGO_PKG_VERSION"), " (https://github.com/lorak12/kite-mc-client)");
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AppConfig {
@@ -18,7 +18,7 @@ pub struct AppConfig {
     /// CurseForge API key from console.curseforge.com.
     #[serde(default)]
     pub curseforge_api_key: Option<String>,
-    /// Base URL of the Aether backend (cosmetics, badge, runtime manifest).
+    /// Base URL of the Kite backend (cosmetics, badge, runtime manifest).
     #[serde(default)]
     pub backend_url: Option<String>,
     /// Ed25519 public key (hex) used to verify runtime update manifests.
@@ -28,7 +28,7 @@ pub struct AppConfig {
 
 impl AppConfig {
     pub fn load(root: &Path) -> AppConfig {
-        let mut cfg: AppConfig = std::fs::read(root.join("aether.config.json"))
+        let mut cfg: AppConfig = std::fs::read(root.join("kite.config.json"))
             .ok()
             .and_then(|b| serde_json::from_slice(&b).ok())
             .unwrap_or_default();
@@ -39,24 +39,24 @@ impl AppConfig {
             }
         }
         let env = |k: &str| std::env::var(k).ok().filter(|v| !v.trim().is_empty());
-        if let Some(v) = env("AETHER_AZURE_CLIENT_ID") {
+        if let Some(v) = env("KITE_AZURE_CLIENT_ID") {
             cfg.azure_client_id = Some(v);
         }
-        if let Some(v) = env("AETHER_CURSEFORGE_API_KEY") {
+        if let Some(v) = env("KITE_CURSEFORGE_API_KEY") {
             cfg.curseforge_api_key = Some(v);
         }
-        if let Some(v) = env("AETHER_BACKEND_URL") {
+        if let Some(v) = env("KITE_BACKEND_URL") {
             cfg.backend_url = Some(v);
         }
-        if let Some(v) = env("AETHER_MANIFEST_PUBLIC_KEY") {
+        if let Some(v) = env("KITE_MANIFEST_PUBLIC_KEY") {
             cfg.manifest_public_key = Some(v);
         }
         cfg
     }
 
-    /// Create `aether.config.json` with empty placeholders if missing, so users just fill in values.
+    /// Create `kite.config.json` with empty placeholders if missing, so users just fill in values.
     pub fn ensure_file(root: &Path) -> std::io::Result<()> {
-        let path = root.join("aether.config.json");
+        let path = root.join("kite.config.json");
         if path.exists() {
             return Ok(());
         }
@@ -113,9 +113,9 @@ mod tests {
 
     #[test]
     fn loads_file() {
-        let dir = std::env::temp_dir().join(format!("aether-cfg-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("kite-cfg-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
-        std::fs::write(dir.join("aether.config.json"), r#"{"azure_client_id":"abc"}"#).unwrap();
+        std::fs::write(dir.join("kite.config.json"), r#"{"azure_client_id":"abc"}"#).unwrap();
         let c = AppConfig::load(&dir);
         assert_eq!(c.azure().unwrap(), "abc");
         let _ = std::fs::remove_dir_all(&dir);

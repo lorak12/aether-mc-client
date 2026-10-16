@@ -288,7 +288,7 @@ mod tests {
 
     #[test]
     fn store_round_trip() {
-        let dir = std::env::temp_dir().join(format!("aether-settings-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("kite-settings-{}", std::process::id()));
         let s = SettingsStore::new(&dir);
         assert_eq!(s.load(), GameSettings::default());
         s.save(&GameSettings { memory_mb: 100, fullscreen: true, ..Default::default() }).unwrap();

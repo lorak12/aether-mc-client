@@ -1,8 +1,8 @@
-//! The Aether backend (friends, chat, presence, store, news, servers) and launcher updates.
+//! The Kite backend (friends, chat, presence, store, news, servers) and launcher updates.
 use crate::accounts::{self, current_account};
 use crate::{e, AppState, Res};
-use aether_core::backend::{self, Token};
-use aether_core::update::{self, UpdateInfo};
+use kite_core::backend::{self, Token};
+use kite_core::update::{self, UpdateInfo};
 use serde::Serialize;
 use serde_json::Value;
 use tauri::{AppHandle, State};
@@ -15,7 +15,7 @@ pub struct CachedToken {
 }
 
 fn backend(s: &AppState) -> Res<&backend::Backend> {
-    s.backend.as_ref().ok_or_else(|| "Online features need the Aether service: set backend_url in aether.config.json.".to_string())
+    s.backend.as_ref().ok_or_else(|| "Online features need the Kite service: set backend_url in kite.config.json.".to_string())
 }
 
 /// A valid backend token for the active account, signing in (Mojang join proof or offline dev login) when needed.
@@ -51,10 +51,10 @@ pub async fn backend_call(s: State<'_, AppState>, method: String, path: String, 
             // Expired or revoked: sign in again once.
             Err(Ok(err)) if err.status == 401 && auth && attempt == 0 => tok = Some(token(&s, true).await?),
             Err(Ok(err)) => return Err(backend::message(&err)),
-            Err(Err(err)) => return Err(format!("Couldn't reach the Aether service ({err}).")),
+            Err(Err(err)) => return Err(format!("Couldn't reach the Kite service ({err}).")),
         }
     }
-    Err("Couldn't sign in to the Aether service.".into())
+    Err("Couldn't sign in to the Kite service.".into())
 }
 
 #[derive(Serialize)]
@@ -80,7 +80,7 @@ pub async fn backend_status(s: State<'_, AppState>) -> Res<BackendStatus> {
 }
 
 fn manifest_key(s: &AppState) -> Res<&str> {
-    s.cfg.manifest_public_key.as_deref().ok_or_else(|| "Update checks need manifest_public_key in aether.config.json.".to_string())
+    s.cfg.manifest_public_key.as_deref().ok_or_else(|| "Update checks need manifest_public_key in kite.config.json.".to_string())
 }
 
 #[tauri::command]
@@ -97,7 +97,7 @@ pub async fn install_update(app: AppHandle, s: State<'_, AppState>, channel: Opt
     let m = update::fetch(s.api.http(), b.base(), channel.as_deref().unwrap_or("stable"), manifest_key(&s)?).await.map_err(e)?;
     let rel = m.launcher.as_ref().filter(|l| update::newer(&l.version, env!("CARGO_PKG_VERSION"))).ok_or("You're already on the newest version")?;
     let d = rel.downloads.get(&update::platform_key()).ok_or("There's no download of this version for your system yet")?;
-    let name = d.url.rsplit('/').next().filter(|n| !n.is_empty() && !n.contains(['\\', ':'])).unwrap_or("aether-setup");
+    let name = d.url.rsplit('/').next().filter(|n| !n.is_empty() && !n.contains(['\\', ':'])).unwrap_or("kite-setup");
     let dest = s.root.join("tmp").join(name);
     update::download(s.api.http(), d, &dest).await.map_err(e)?;
     s.log(format!("installing launcher update {} from {}", rel.version, dest.display()));

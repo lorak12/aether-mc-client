@@ -1,5 +1,5 @@
-//! Network tests against Mojang. Run with: cargo test -p aether-core --test live -- --ignored --nocapture
-use aether_core::version::{Manifest, VersionJson};
+//! Network tests against Mojang. Run with: cargo test -p kite-core --test live -- --ignored --nocapture
+use kite_core::version::{Manifest, VersionJson};
 
 const TARGETS: &[&str] = &["1.7.10", "1.8.9", "1.12.2", "1.21.11", "26.1", "26.2", "26.2.1", "26.3"];
 
@@ -20,21 +20,21 @@ async fn target_versions_parse() {
 }
 
 /// Full install + start of a real game with a placeholder session (no multiplayer), killed after 25s.
-/// Set AETHER_TEST_ROOT to reuse a cache (e.g. the launcher's app data folder), AETHER_TEST_PROFILES=1.21.11:fabric,1.8.9:vanilla,
-/// AETHER_TEST_EXTRA_MODS to add a folder of mod jars.
+/// Set KITE_TEST_ROOT to reuse a cache (e.g. the launcher's app data folder), KITE_TEST_PROFILES=1.21.11:fabric,1.8.9:vanilla,
+/// KITE_TEST_EXTRA_MODS to add a folder of mod jars.
 #[tokio::test]
 #[ignore]
 async fn prepare_and_boot() {
-    use aether_core::download::Layout;
-    use aether_core::launch::{prepare, LaunchRequest, Session};
-    use aether_core::settings::GameSettings;
-    use aether_core::profile::{Loader, ProfileStore};
+    use kite_core::download::Layout;
+    use kite_core::launch::{prepare, LaunchRequest, Session};
+    use kite_core::settings::GameSettings;
+    use kite_core::profile::{Loader, ProfileStore};
 
-    let root = std::env::var("AETHER_TEST_ROOT").map(std::path::PathBuf::from).unwrap_or_else(|_| std::env::temp_dir().join("aether-live"));
+    let root = std::env::var("KITE_TEST_ROOT").map(std::path::PathBuf::from).unwrap_or_else(|_| std::env::temp_dir().join("kite-live"));
     // A loader version can be pinned: 1.20.1:forge:47.3.0
-    let wanted = std::env::var("AETHER_TEST_PROFILES").unwrap_or_else(|_| "1.21.11:fabric".into());
+    let wanted = std::env::var("KITE_TEST_PROFILES").unwrap_or_else(|_| "1.21.11:fabric".into());
     let client = reqwest::Client::new();
-    let games = std::env::temp_dir().join("aether-live-games");
+    let games = std::env::temp_dir().join("kite-live-games");
     let store = ProfileStore::new(&games);
     for spec in wanted.split(',') {
         let parts: Vec<&str> = spec.split(':').collect();
@@ -42,17 +42,17 @@ async fn prepare_and_boot() {
         let loader: Loader = serde_json::from_value(serde_json::Value::String(loader.into())).unwrap();
         let mut profile = store.create(&format!("live {mc}"), mc, loader).unwrap();
         profile.loader_version = parts.get(2).map(|v| v.to_string());
-        let client_jar = aether_core::runtime::prepare_profile(&root, &profile, &store.dir(&profile.id)).unwrap();
-        println!("{spec}: aether client = {client_jar:?}");
-        // AETHER_TEST_EXTRA_MODS=<folder>: also load these jars, to check compatibility with a real mod set.
-        if let Ok(extra) = std::env::var("AETHER_TEST_EXTRA_MODS") {
+        let client_jar = kite_core::runtime::prepare_profile(&root, &profile, &store.dir(&profile.id)).unwrap();
+        println!("{spec}: kite client = {client_jar:?}");
+        // KITE_TEST_EXTRA_MODS=<folder>: also load these jars, to check compatibility with a real mod set.
+        if let Ok(extra) = std::env::var("KITE_TEST_EXTRA_MODS") {
             for f in std::fs::read_dir(extra).unwrap().flatten() {
                 if f.path().extension().is_some_and(|e| e == "jar") {
                     std::fs::copy(f.path(), store.dir(&profile.id).join("mods").join(f.file_name())).unwrap();
                 }
             }
         }
-        let session = Session { username: "AetherTest".into(), uuid: "00000000000000000000000000000000".into(), access_token: "0".into() };
+        let session = Session { username: "KiteTest".into(), uuid: "00000000000000000000000000000000".into(), access_token: "0".into() };
         let mut last = String::new();
         let req = LaunchRequest { game_dir: store.dir(&profile.id), session, settings: GameSettings::default(), extra_jvm: vec![], quick_play: None };
         let argv = prepare(&client, &Layout::new(&root), &profile, req, |s, d, t| {
@@ -81,7 +81,7 @@ async fn prepare_and_boot() {
         println!("{spec}: alive after 25s = {alive}\n{}", tail.join("\n"));
         assert!(alive, "{spec} exited early");
         if client_jar.is_some() {
-            assert!(out.contains("Aether loaded"), "{spec}: Aether client did not load");
+            assert!(out.contains("Kite loaded"), "{spec}: Kite client did not load");
         }
     }
     let _ = std::fs::remove_dir_all(&games);
@@ -90,7 +90,7 @@ async fn prepare_and_boot() {
 #[tokio::test]
 #[ignore]
 async fn modrinth_search_and_versions() {
-    use aether_core::modrinth::{Modrinth, ProjectType};
+    use kite_core::modrinth::{Modrinth, ProjectType};
     let api = Modrinth::new().unwrap();
     let r = api.search("sodium", ProjectType::Mod, Some("1.21.11"), Some("fabric"), 0, 5).await.unwrap();
     println!("hits: {} first: {:?}", r.total_hits, r.hits.first().map(|h| &h.slug));

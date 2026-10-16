@@ -47,7 +47,7 @@ export function NewsPage() {
         <EmptyState
           icon={<INews size={22} />}
           title={!app.cfg?.backend ? "No news here" : tag === "All" ? "No news yet" : `No ${tag.toLowerCase()} posts`}
-          text={!app.cfg?.backend ? "Updates and announcements show up once the launcher is connected to the Aether service." : "Check back soon."}
+          text={!app.cfg?.backend ? "Updates and announcements show up once the launcher is connected to the Kite service." : "Check back soon."}
         />
       ) : (
         <div className="bento news">

@@ -116,7 +116,7 @@ function UpdatesModal({ open, onClose }: { open: boolean; onClose: () => void })
       ) : (
         <div className="stack">
           <p>
-            <strong>Aether {info.latest}</strong> is available. You have {info.current}.
+            <strong>Kite {info.latest}</strong> is available. You have {info.current}.
           </p>
           {info.notes && <p className="muted pre-wrap">{info.notes}</p>}
           {info.installable ? (

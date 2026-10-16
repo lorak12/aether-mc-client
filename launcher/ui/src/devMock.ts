@@ -1,5 +1,5 @@
 // Dev-only: lets the UI run in a plain browser (no Tauri) for design work and self-testing with `npm run dev`.
-// Fakes the Tauri IPC (and the Aether backend behind `backend_call`) with in-memory state. Never part of a build.
+// Fakes the Tauri IPC (and the Kite backend behind `backend_call`) with in-memory state. Never part of a build.
 type Args = Record<string, any>;
 
 const now = Date.now();
@@ -15,13 +15,13 @@ const prof = (id: string, name: string, mc: string, loader: string, kind: string
   game_dir: null,
   overrides: {},
   meta: meta(kind, extra),
-  dir: `C:\\Users\\dev\\AppData\\Roaming\\gg.aether.launcher\\profiles\\${id}`,
+  dir: `C:\\Users\\dev\\AppData\\Roaming\\gg.kite.launcher\\profiles\\${id}`,
 });
 let profiles: any[] = [
   prof("skyblock-reborn", "Skyblock Reborn", "1.21.11", "fabric", "client", { lastPlayed: now - 3600_000, plays: 14 }),
   prof("vanilla", "Vanilla+", "1.21.4", "vanilla", "vanilla", { plays: 2, lastPlayed: now - 5 * 86400_000 }),
   prof("create-odyssey", "Create Odyssey", "1.20.1", "forge", "modpack", { description: "Tech and exploration pack." }),
-  prof("aether-26", "Aether 26.3", "26.3", "quilt", "client"),
+  prof("kite-26", "Kite 26.3", "26.3", "quilt", "client"),
 ];
 let settings: any = { memoryMb: 4096, width: 1280, height: 720, fullscreen: false, jvmArgs: "", gc: "G1GC", preLaunch: "", wrapper: "", postExit: "", env: [], javaPath: "", shareOptions: true };
 const lock = (project_id: string, title: string, project_type: string, filename: string, explicit = true, enabled = true) => ({ project_id, version_id: "v-" + project_id, title, project_type, filename, sha1: "x", explicit, world: null, enabled, source: "modrinth" });
@@ -84,12 +84,12 @@ const versions = (pid: string) =>
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const svg = (a: string, b: string) => `data:image/svg+xml;utf8,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="320" height="180" fill="url(#g)"/></svg>`)}`;
 
-// ---------- a fake Aether backend ----------
+// ---------- a fake Kite backend ----------
 const ME = "069a79f444e94726a5befca90e38aaf5";
 const backend = {
   coins: 750,
-  owned: ["cape-aether", "cape-midnight", "wings-fairy", "hat-tophat", "hat-bandana", "hat-bandana-blue", "ears-cat", "ears-bunny", "face-shades", "boots-frost", "back-explorer"],
-  loadout: { cape: "cape-aether" } as Record<string, string>,
+  owned: ["cape-kite", "cape-midnight", "wings-fairy", "hat-tophat", "hat-bandana", "hat-bandana-blue", "ears-cat", "ears-bunny", "face-shades", "boots-frost", "back-explorer"],
+  loadout: { cape: "cape-kite" } as Record<string, string>,
   friends: [
     { uuid: "853c80ef3c3749fdaa49938b674adae6", name: "jeb_", status: "online", activity: "Playing on play.example.net", server: "play.example.net", lastSeen: now },
     { uuid: "61699b2ed3274a019f1e0ea8c3f06bc6", name: "Dinnerbone", status: "away", activity: "In the launcher", server: null, lastSeen: now },
@@ -101,10 +101,10 @@ const backend = {
     { id: 1, from: "853c80ef3c3749fdaa49938b674adae6", to: ME, text: "want to play later?", at: now - 40 * 60_000, read: false },
     { id: 2, from: ME, to: "853c80ef3c3749fdaa49938b674adae6", text: "sure, after dinner", at: now - 38 * 60_000, read: true },
   ],
-  txns: [{ id: 1, at: now - 86400_000, label: "Welcome to Aether", coins: 750 }],
+  txns: [{ id: 1, at: now - 86400_000, label: "Welcome to Kite", coins: 750 }],
 };
 const STORE = [
-  ["cape-aether", "cape", "Aether", "rare", null],
+  ["cape-kite", "cape", "Kite", "rare", null],
   ["cape-aurora", "cape", "Aurora", "epic", 600],
   ["cape-galaxy", "cape", "Galaxy", "legendary", 1200],
   ["wings-angel", "wings", "Angel Wings", "epic", 600],
@@ -193,11 +193,28 @@ function emit(event: string, payload: unknown) {
   for (const id of listeners.get(event) ?? []) callbacks.get(id)?.({ event, id, payload });
 }
 
+const SAMPLE_LOG = [
+  "[main/INFO] (FabricLoader) Loading Minecraft 1.21.11 with Fabric Loader 0.17.2",
+  "[main/INFO]: [Kite] client 0.1.0 starting, docs at https://github.com/lorak12/kite-mc-client.",
+  "[Render thread/INFO]: Sound engine started",
+  "[Render thread/WARN]: Missing sound for event: minecraft:item.goat_horn.play",
+  "[Render thread/INFO]: [System] [CHAT] §6[Server] §aWelcome §lback§r, Notch! Vote at §bhttps://example.com/vote",
+  "[Render thread/ERROR]: Failed to load texture: java.io.FileNotFoundException: kite:cosmetics/missing.png",
+  "\tat net.minecraft.client.texture.ResourceTexture.load(ResourceTexture.java:58)",
+  "\tat net.minecraft.client.texture.TextureManager.loadTexture(TextureManager.java:104)",
+  "\t... 12 more",
+];
+/** Game-log-shaped sample: header lines get a timestamp, stack-trace lines stay bare. */
+function sampleLogLine(n: number) {
+  const m = SAMPLE_LOG[n % SAMPLE_LOG.length];
+  return m.startsWith("\t") ? m : `[${new Date().toLocaleTimeString("en-GB")}] ${m}`;
+}
+
 async function launch(profileId: string) {
   if (running) throw "Minecraft is already running";
   running = profileId;
   killed = false;
-  const stages: [string, number][] = [["account", 1], ["aether-client", 1], ["version", 1], ["java", 40], ["loader", 3], ["libraries", 120], ["assets", 900]];
+  const stages: [string, number][] = [["account", 1], ["kite-client", 1], ["version", 1], ["java", 40], ["loader", 3], ["libraries", 120], ["assets", 900]];
   for (const [stage, total] of stages) {
     for (let d = 0; d <= total; d += Math.max(1, Math.round(total / 6))) {
       if (killed) {
@@ -211,9 +228,8 @@ async function launch(profileId: string) {
   emit("launch-progress", { stage: "running", done: 1, total: 1 });
   logLines = [];
   let n = 0;
-  const msgs = ["[Render thread/INFO]: Loading Minecraft 1.21.11 with Fabric Loader 0.17.2", "[main/INFO]: [Aether] client 0.1.0 starting", "[Render thread/INFO]: Sound engine started", "[Render thread/ERROR]: Failed to load texture: aether:cosmetics/missing.png"];
   const t = setInterval(() => {
-    logLines.push(`[${new Date().toLocaleTimeString()}] ${msgs[n++ % msgs.length]}`);
+    logLines.push(sampleLogLine(n++));
     if (n > 60 || running !== profileId) clearInterval(t);
   }, 400);
   const exit = (code: number) => {
@@ -236,7 +252,7 @@ const worlds: Record<string, any[]> = {
 
 const handlers: Record<string, (a: Args) => unknown> = {
   config_status: () => ({ login: true, curseforge: false, backend: true, backend_url: "http://localhost:8787", updates: true }),
-  app_info: () => ({ version: "0.1.0", data_dir: "C:\\Users\\dev\\AppData\\Roaming\\gg.aether.launcher", config_file: "C:\\Users\\dev\\AppData\\Roaming\\gg.aether.launcher\\aether.config.json", os: "windows x86_64" }),
+  app_info: () => ({ version: "0.1.0", data_dir: "C:\\Users\\dev\\AppData\\Roaming\\gg.kite.launcher", config_file: "C:\\Users\\dev\\AppData\\Roaming\\gg.kite.launcher\\kite.config.json", os: "windows x86_64" }),
   list_profiles: () => profiles,
   create_profile: ({ name, mcVersion, loader }) => {
     const id = name.toLowerCase().replace(/\W+/g, "-") + "-" + Math.random().toString(36).slice(2, 5);
@@ -260,7 +276,7 @@ const handlers: Record<string, (a: Args) => unknown> = {
   set_settings: ({ game }) => (settings = game),
   mc_versions: () => ["26.3", "26.2", "26.1", "1.21.11", "1.21.10", "1.21.8", "1.21.5", "1.21.4", "1.21.3", "1.21.1", "1.21", "1.20.6", "1.20.4", "1.20.1", "1.19.4", "1.18.2", "1.16.5", "1.12.2", "1.8.9"].map((id) => ({ id, kind: "release" })),
   loader_versions: ({ loader }) => (loader === "forge" ? ["47.4.0", "47.3.0", "47.2.0"] : ["0.17.2", "0.16.14", "0.17.3-beta.1"]).map((v) => ({ version: v, stable: !v.includes("beta") })),
-  aether_versions: () => ["26.3", "26.2", "26.1.2", "1.21.11", "1.21.10", "1.21.8", "1.21.5", "1.21.4", "1.21.3", "1.21.1", "1.20.6", "1.20.4", "1.20.1", "1.19.4", "1.18.2", "1.16.5", "1.12.2", "1.8.9", "1.7.10"],
+  kite_versions: () => ["26.3", "26.2", "26.1.2", "1.21.11", "1.21.10", "1.21.8", "1.21.5", "1.21.4", "1.21.3", "1.21.1", "1.20.6", "1.20.4", "1.20.1", "1.19.4", "1.18.2", "1.16.5", "1.12.2", "1.8.9", "1.7.10"],
   list_javas: async () => (await sleep(400), [{ path: "C:\\Program Files\\Eclipse Adoptium\\jdk-21\\bin\\javaw.exe", version: "21.0.5", major: 21, vendor: "Eclipse Adoptium", arch: "amd64" }]),
   probe_java: ({ path }) => ({ path, version: "21.0.5", major: 21, vendor: "Eclipse Adoptium", arch: "amd64" }),
   search_projects: async ({ q }) => {
@@ -385,15 +401,14 @@ const handlers: Record<string, (a: Args) => unknown> = {
   reveal_path: ({ path }) => console.info("[mock] reveal", path),
   open_url: ({ url }) => void window.open(url, "_blank"),
   restart_app: () => location.reload(),
-  open_logs_window: () => void window.open(location.pathname + "?view=logs", "aether-logs", "width=920,height=580"),
+  open_logs_window: () => void window.open(location.pathname + "?view=logs", "kite-logs", "width=920,height=580"),
   system_memory_mb: () => 32768,
 };
 
 // The logs window is a separate page: give it its own sample stream.
 if (location.search.includes("view=logs")) {
-  const sample = ["[Render thread/INFO]: Loading Minecraft 1.21.11 with Fabric Loader 0.17.2", "[Render thread/WARN]: Missing sound for event: minecraft:item.goat_horn.play", "[Render thread/ERROR]: Failed to load texture: aether:cosmetics/missing.png"];
   let i = 0;
-  setInterval(() => logLines.push(`[${new Date().toLocaleTimeString("en-GB")}] ${sample[i++ % sample.length]}`), 300);
+  setInterval(() => logLines.push(sampleLogLine(i++)), 300);
 }
 
 const w = window as unknown as Record<string, unknown>;

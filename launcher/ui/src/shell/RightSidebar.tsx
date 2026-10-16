@@ -57,7 +57,7 @@ export function SocialUnavailable({ compact = false }: { compact?: boolean }) {
       <EmptyState
         icon={<ICommunity size={22} />}
         title="Friends aren't set up"
-        text={compact ? "Connect the launcher to the Aether service to add friends." : "Friends, chat and presence need the Aether service. Set backend_url in aether.config.json (Settings > About shows where it is)."}
+        text={compact ? "Connect the launcher to the Kite service to add friends." : "Friends, chat and presence need the Kite service. Set backend_url in kite.config.json (Settings > About shows where it is)."}
         action={
           !compact && (
             <button className="btn sm" onClick={() => app.navigate({ page: "settings", tab: "about" })}>
@@ -81,7 +81,7 @@ export function SocialUnavailable({ compact = false }: { compact?: boolean }) {
       />
     );
   return (
-    <ErrorCard message={app.online?.error ?? "Couldn't sign in to the Aether service."} retry={app.refreshOnline} />
+    <ErrorCard message={app.online?.error ?? "Couldn't sign in to the Kite service."} retry={app.refreshOnline} />
   );
 }
 

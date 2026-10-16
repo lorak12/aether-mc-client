@@ -71,15 +71,15 @@ export function VersionSelect({ value, onChange }: { value: string; onChange: (v
 
 export type LoaderChoice = Loader | "builtin";
 
-/** Loaders a profile kind can use. Client profiles run Aether on Fabric or Quilt, or "Vanilla" = built-in mods only. */
-export function loaderChoices(kind: ProfileKind): { id: LoaderChoice; label: string; disabled?: string }[] {
+/** Loaders a profile kind can use. Client profiles run Kite on Fabric or Quilt, or "Vanilla" = built-in mods only. Forge and NeoForge work without Kite. */
+export function loaderChoices(kind: ProfileKind): { id: LoaderChoice; label: string; disabled?: string; title?: string }[] {
   if (kind === "client")
     return [
       { id: "builtin", label: "Vanilla" },
       { id: "fabric", label: "Fabric" },
       { id: "quilt", label: "Quilt" },
-      { id: "forge", label: "Forge", disabled: "The Kite client runs on Fabric and Quilt" },
-      { id: "neoforge", label: "NeoForge", disabled: "The Kite client runs on Fabric and Quilt" },
+      { id: "forge", label: "Forge", title: "Works, but without the Kite mod suite" },
+      { id: "neoforge", label: "NeoForge", title: "Works, but without the Kite mod suite" },
     ];
   return (Object.keys(LOADER_NAMES) as Loader[]).map((l) => ({ id: l, label: LOADER_NAMES[l] }));
 }
@@ -94,7 +94,7 @@ export function LoaderPicker({ kind, value, onChange, disabled }: { kind: Profil
           aria-checked={o.id === value}
           className={o.id === value ? "on" : ""}
           disabled={disabled || !!o.disabled}
-          title={o.disabled}
+          title={o.disabled ?? o.title}
           onClick={() => onChange(o.id)}
         >
           {o.label}

@@ -1,7 +1,7 @@
 //! A profile's worlds (and backups), saved servers and screenshots.
 use crate::{e, AppState, Res};
-use aether_core::gamefiles::{self, Backup, Screenshot, World};
-use aether_core::servers::{self, Ping, SavedServer};
+use kite_core::gamefiles::{self, Backup, Screenshot, World};
+use kite_core::servers::{self, Ping, SavedServer};
 use tauri::State;
 
 async fn not_running(s: &AppState, profile_id: &str, what: &str) -> Res<()> {

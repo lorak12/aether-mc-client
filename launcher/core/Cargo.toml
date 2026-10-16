@@ -1,5 +1,5 @@
 [package]
-name = "aether-core"
+name = "kite-core"
 version = "0.1.0"
 edition = "2021"
 description = "Launcher core: Mojang manifests, downloads, launch args, Microsoft auth"

@@ -1,9 +1,9 @@
-//! The Aether in-game client (the Java runtime in `runtime/`): which profiles can run it, where its jar is, and
+//! The Kite in-game client (the Java runtime in `runtime/`): which profiles can run it, where its jar is, and
 //! installing it into a profile's `mods` folder before launch. Listed releases have a built and audited adapter on
 //! Fabric or Quilt; 1.8.9 and 1.12.2 run on Legacy Fabric.
 //!
 //! Jar lookup, first hit wins:
-//!   1. `AETHER_RUNTIME_DIR` (a folder holding `aether-<mc>-*.jar`)
+//!   1. `KITE_RUNTIME_DIR` (a folder holding `kite-<mc>-*.jar`)
 //!   2. `<data root>/runtime/` (where a packaged build or the updater puts it)
 //!   3. the repo's Gradle output `runtime/<adapter dir>/build/libs/` (development checkouts)
 use crate::profile::{Loader, Profile};
@@ -11,7 +11,7 @@ use crate::Result;
 use std::path::{Path, PathBuf};
 
 /// File name inside `mods/`. Fixed so a newer build replaces the old one instead of loading twice.
-pub const INSTALLED_NAME: &str = "aether-client.jar";
+pub const INSTALLED_NAME: &str = "kite-client.jar";
 
 /// Game versions the client supports and their adapter folders under `runtime/`, newest first. The UI reads this
 /// through a command. The legacy ones are a separate Gradle build (Legacy Fabric's toolchain).
@@ -62,7 +62,7 @@ pub fn adapter_for(mc_version: &str, loader: Loader) -> Option<&'static str> {
 
 /// Folder holding only the client jar, for profiles set to load built-in mods only.
 pub fn builtin_dir(game_dir: &Path) -> PathBuf {
-    game_dir.join(".aether").join("builtin-mods")
+    game_dir.join(".kite").join("builtin-mods")
 }
 
 /// JVM properties that point the loader at `dir` instead of `mods/`.
@@ -74,9 +74,9 @@ pub fn mods_folder_args(loader: Loader, dir: &Path) -> Vec<String> {
     }
 }
 
-/// Newest `aether-<mc>-*.jar` in `dir` (ignoring `-sources` / `-dev` jars).
+/// Newest `kite-<mc>-*.jar` in `dir` (ignoring `-sources` / `-dev` jars).
 fn newest_jar(dir: &Path, mc_version: &str) -> Option<PathBuf> {
-    let prefix = format!("aether-{mc_version}-");
+    let prefix = format!("kite-{mc_version}-");
     std::fs::read_dir(dir)
         .ok()?
         .filter_map(|e| e.ok())
@@ -92,7 +92,7 @@ fn newest_jar(dir: &Path, mc_version: &str) -> Option<PathBuf> {
 pub fn find_jar(data_root: &Path, profile: &Profile) -> Option<PathBuf> {
     let adapter = adapter_for(&profile.mc_version, profile.loader)?;
     let mut dirs = Vec::new();
-    if let Some(d) = std::env::var_os("AETHER_RUNTIME_DIR") {
+    if let Some(d) = std::env::var_os("KITE_RUNTIME_DIR") {
         dirs.push(PathBuf::from(d));
     }
     dirs.push(data_root.join("runtime"));
@@ -100,7 +100,7 @@ pub fn find_jar(data_root: &Path, profile: &Profile) -> Option<PathBuf> {
     dirs.iter().find_map(|d| newest_jar(d, &profile.mc_version))
 }
 
-/// Copy `jar` to `<game_dir>/mods/aether-client.jar` unless an identical copy is already there.
+/// Copy `jar` to `<game_dir>/mods/kite-client.jar` unless an identical copy is already there.
 pub fn install(game_dir: &Path, jar: &Path) -> Result<PathBuf> {
     let mods = game_dir.join("mods");
     std::fs::create_dir_all(&mods)?;
@@ -168,7 +168,7 @@ mod tests {
     use super::*;
 
     fn tmp(name: &str) -> PathBuf {
-        let d = std::env::temp_dir().join(format!("aether-runtime-test-{name}-{}", std::process::id()));
+        let d = std::env::temp_dir().join(format!("kite-runtime-test-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&d);
         std::fs::create_dir_all(&d).unwrap();
         d
@@ -225,11 +225,11 @@ mod tests {
     #[test]
     fn picks_release_jar_and_installs_idempotently() {
         let d = tmp("pick");
-        std::fs::write(d.join("aether-1.21.11-0.1.0.jar"), b"release").unwrap();
-        std::fs::write(d.join("aether-1.21.11-0.1.0-sources.jar"), b"src").unwrap();
-        std::fs::write(d.join("aether-26.1-0.1.0.jar"), b"other").unwrap();
+        std::fs::write(d.join("kite-1.21.11-0.1.0.jar"), b"release").unwrap();
+        std::fs::write(d.join("kite-1.21.11-0.1.0-sources.jar"), b"src").unwrap();
+        std::fs::write(d.join("kite-26.1-0.1.0.jar"), b"other").unwrap();
         let jar = newest_jar(&d, "1.21.11").unwrap();
-        assert!(jar.ends_with("aether-1.21.11-0.1.0.jar"));
+        assert!(jar.ends_with("kite-1.21.11-0.1.0.jar"));
 
         let game = d.join("game");
         let dest = install(&game, &jar).unwrap();

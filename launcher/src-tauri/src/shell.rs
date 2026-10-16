@@ -54,7 +54,7 @@ pub fn open_path(s: State<AppState>, kind: String, profile_id: Option<String>) -
         "app" => s.root.clone(),
         "launcher-logs" => s.root.join("logs"),
         "config-file" => {
-            return reveal(&s.root.join("aether.config.json"));
+            return reveal(&s.root.join("kite.config.json"));
         }
         k => {
             let id = profile_id.ok_or("Pick a profile first")?;
@@ -123,15 +123,17 @@ pub fn restart_app(app: AppHandle) {
     app.restart();
 }
 
-/// Show the live log window (a second frameless window rendering `?view=logs`).
+/// Show the live log window (a second frameless window told apart by its "logs" label).
+/// Must be async: building a webview window from a sync command deadlocks WebView2 on Windows
+/// (the window appears but stays blank white forever).
 #[tauri::command]
-pub fn open_logs_window(app: AppHandle) -> Res<()> {
+pub async fn open_logs_window(app: AppHandle) -> Res<()> {
     if let Some(w) = app.get_webview_window("logs") {
         let _ = w.show();
         let _ = w.unminimize();
         return w.set_focus().map_err(e);
     }
-    tauri::WebviewWindowBuilder::new(&app, "logs", tauri::WebviewUrl::App("index.html?view=logs".into()))
+    tauri::WebviewWindowBuilder::new(&app, "logs", tauri::WebviewUrl::App("index.html".into()))
         .title("Kite Client — Live logs")
         .inner_size(920.0, 580.0)
         .min_inner_size(560.0, 320.0)
@@ -154,7 +156,7 @@ pub fn app_info(s: State<AppState>) -> AppInfo {
     AppInfo {
         version: env!("CARGO_PKG_VERSION"),
         data_dir: s.root.display().to_string(),
-        config_file: s.root.join("aether.config.json").display().to_string(),
+        config_file: s.root.join("kite.config.json").display().to_string(),
         os: format!("{} {}", std::env::consts::OS, std::env::consts::ARCH),
     }
 }

@@ -93,7 +93,7 @@ interface Store {
   globalSettings: GameSettings;
   setGlobalSettings: (s: GameSettings) => void;
   /** Game versions the Kite client runs on. */
-  aetherVersions: string[];
+  kiteVersions: string[];
 
   accounts: AccountList | null;
   account: SavedAccount | null;
@@ -102,7 +102,7 @@ interface Store {
   switchAccount: (uuid: string) => Promise<void>;
   presence: Presence;
   setPresence: (p: Presence) => void;
-  /** Aether backend sign-in for the active account. */
+  /** Kite backend sign-in for the active account. */
   online: BackendStatus | null;
   refreshOnline: () => Promise<void>;
 
@@ -214,7 +214,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [profilesLoaded, setProfilesLoaded] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(() => load<string | null>("activeProfile", null));
   const [globalSettings, setGlobalState] = useState<GameSettings>(DEFAULT_SETTINGS);
-  const [aetherVersions, setAetherVersions] = useState<string[]>([]);
+  const [kiteVersions, setKiteVersions] = useState<string[]>([]);
 
   const setActive = useCallback((id: string) => {
     setActiveId(id);
@@ -243,7 +243,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     })();
     api.configStatus().then(setCfg).catch(() => {});
     api.getSettings().then(setGlobalState).catch(() => {});
-    api.aetherVersions().then(setAetherVersions).catch(() => {});
+    api.kiteVersions().then(setKiteVersions).catch(() => {});
   }, [refreshProfiles]);
 
   const saveProfile = useCallback(
@@ -375,7 +375,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           if (prefsRef.current.notifyFriends)
             pushNotification({ kind: "friend", title: `Message from ${m.fromName}`, detail: m.text.length > 120 ? m.text.slice(0, 117) + "…" : m.text, action: { label: "Reply", route: { page: "community", tab: "messages", friend: m.from } } });
         }
-        if (u.messages.length) window.dispatchEvent(new CustomEvent("aether:messages", { detail: u.messages }));
+        if (u.messages.length) window.dispatchEvent(new CustomEvent("kite:messages", { detail: u.messages }));
         for (const q of u.requests) {
           if (prefsRef.current.notifyFriends)
             pushNotification({ kind: "friend", title: `${q.username} sent you a friend request`, detail: "Accept it to see when they're playing.", action: { label: "View", route: { page: "community", tab: "requests" } } });
@@ -511,7 +511,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setMeta,
       globalSettings,
       setGlobalSettings,
-      aetherVersions,
+      kiteVersions,
       accounts,
       account,
       accountsLoaded,
@@ -541,7 +541,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       prefs,
       setPrefs,
     }),
-    [hist, navigate, replace, back, forward, overlay, newProfileOpen, cfg, profiles, profilesLoaded, refreshProfiles, activeId, setActive, active, saveProfile, setMeta, globalSettings, setGlobalSettings, aetherVersions, accounts, account, accountsLoaded, refreshAccounts, switchAccount, setPresence, online, refreshOnline, launch, play, stop, notifications, pushNotification, updateNotification, markAllRead, clearNotifications, runAction, coins, refreshCoins, toasts, toast, error, dismissToast, prefs, setPrefs],
+    [hist, navigate, replace, back, forward, overlay, newProfileOpen, cfg, profiles, profilesLoaded, refreshProfiles, activeId, setActive, active, saveProfile, setMeta, globalSettings, setGlobalSettings, kiteVersions, accounts, account, accountsLoaded, refreshAccounts, switchAccount, setPresence, online, refreshOnline, launch, play, stop, notifications, pushNotification, updateNotification, markAllRead, clearNotifications, runAction, coins, refreshCoins, toasts, toast, error, dismissToast, prefs, setPrefs],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

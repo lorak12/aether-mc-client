@@ -1,8 +1,8 @@
-//! Client for the Aether backend (`backend/`): sign-in and authenticated JSON calls.
+//! Client for the Kite backend (`backend/`): sign-in and authenticated JSON calls.
 //!
 //! Sign-in proves account ownership the way servers do: ask the backend for a nonce, tell Mojang's session server that
 //! this account "joined" that nonce, then let the backend check with Mojang. Offline (dev) accounts use
-//! `/v1/auth/offline`, which the backend only allows when started with `AETHER_ALLOW_OFFLINE=1`.
+//! `/v1/auth/offline`, which the backend only allows when started with `KITE_ALLOW_OFFLINE=1`.
 use crate::{Error, Result};
 use serde::Deserialize;
 use serde_json::Value;
@@ -57,7 +57,7 @@ impl Backend {
         }
         let r = self.http.post(format!("{}/v1/auth/mojang", self.base)).json(&serde_json::json!({ "username": username, "serverId": server_id })).send().await?;
         if !r.status().is_success() {
-            return Err(Error::Auth(format!("The Aether service didn't accept the sign-in ({})", r.status())));
+            return Err(Error::Auth(format!("The Kite service didn't accept the sign-in ({})", r.status())));
         }
         Ok(r.json().await?)
     }
@@ -69,7 +69,7 @@ impl Backend {
             return Err(Error::Auth("Online features need a Microsoft account (this server doesn't allow offline accounts).".into()));
         }
         if !r.status().is_success() {
-            return Err(Error::Auth(format!("The Aether service didn't accept the sign-in ({})", r.status())));
+            return Err(Error::Auth(format!("The Kite service didn't accept the sign-in ({})", r.status())));
         }
         Ok(r.json().await?)
     }
@@ -101,11 +101,11 @@ impl Backend {
 /// A friendly message for a backend error code.
 pub fn message(e: &ApiError) -> String {
     match (e.status, e.code.as_str()) {
-        (401, _) => "Your Aether sign-in expired. Try again.".into(),
+        (401, _) => "Your Kite sign-in expired. Try again.".into(),
         (429, _) => "Too many requests. Wait a minute and try again.".into(),
         (_, "insufficient_coins") => "You don't have enough coins for that.".into(),
         (_, "already_owned") => "You already own that.".into(),
-        (_, "unknown_user") => "Nobody with that name has used Aether yet.".into(),
+        (_, "unknown_user") => "Nobody with that name has used Kite yet.".into(),
         (_, "already_friends") => "You're already friends.".into(),
         (_, "request_exists") => "You already sent a request.".into(),
         (_, "blocked") => "You can't add this player.".into(),
@@ -113,8 +113,8 @@ pub fn message(e: &ApiError) -> String {
         (_, "not_friends") => "You can only message friends.".into(),
         (_, "payments_disabled") => "Buying coins isn't available yet.".into(),
         (_, "not_found") => "That doesn't exist any more.".into(),
-        (s, c) if s >= 500 => format!("The Aether service had a problem ({c}). Try again later."),
-        (_, c) => format!("The Aether service said: {}", c.replace('_', " ")),
+        (s, c) if s >= 500 => format!("The Kite service had a problem ({c}). Try again later."),
+        (_, c) => format!("The Kite service said: {}", c.replace('_', " ")),
     }
 }
 

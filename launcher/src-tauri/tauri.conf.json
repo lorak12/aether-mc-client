@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Aether",
+  "productName": "Kite",
   "version": "0.1.0",
-  "identifier": "gg.aether.launcher",
+  "identifier": "gg.kite.launcher",
   "build": {
     "beforeDevCommand": "npm --prefix ui run dev",
     "devUrl": "http://localhost:1420",
@@ -28,7 +28,7 @@
       "assetProtocol": {
         "enable": true,
         "scope": [
-          "$APPDATA/gg.aether.launcher/**"
+          "$APPDATA/gg.kite.launcher/**"
         ]
       }
     }

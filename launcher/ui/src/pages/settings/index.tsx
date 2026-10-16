@@ -48,8 +48,8 @@ export const SETTINGS_INDEX: { id: string; title: string; section: string; tab: 
 const ITEMS: { key: "login" | "curseforge" | "backend" | "updates"; name: string; field: string; how: string }[] = [
   { key: "login", name: "Microsoft sign-in", field: "azure_client_id", how: "Azure app (public client) approved for Minecraft services. Add http://localhost as a Mobile and desktop redirect for browser sign-in." },
   { key: "curseforge", name: "CurseForge", field: "curseforge_api_key", how: "API key from console.curseforge.com" },
-  { key: "backend", name: "Aether service", field: "backend_url", how: "Friends, chat, store, news and cosmetics for other players" },
-  { key: "updates", name: "Launcher updates", field: "manifest_public_key", how: "Public key that signs update manifests (needs the Aether service too)" },
+  { key: "backend", name: "Kite service", field: "backend_url", how: "Friends, chat, store, news and cosmetics for other players" },
+  { key: "updates", name: "Launcher updates", field: "manifest_public_key", how: "Public key that signs update manifests (needs the Kite service too)" },
 ];
 
 export function SettingsPage({ tab: initial }: { tab?: string }) {
@@ -202,7 +202,7 @@ function ContentPrefs() {
           ]}
         />
       </Field>
-      <Field label="CurseForge" hint={app.cfg?.curseforge ? "API key configured" : "No API key: CurseForge search and installs are off. Add curseforge_api_key to aether.config.json."}>
+      <Field label="CurseForge" hint={app.cfg?.curseforge ? "API key configured" : "No API key: CurseForge search and installs are off. Add curseforge_api_key to kite.config.json."}>
         <span className={app.cfg?.curseforge ? "badge ok" : "badge"}>{app.cfg?.curseforge ? "Configured" : "Not set up"}</span>
       </Field>
       <Field label="Install target" hint="Shift-click Install and the install dialog use this profile.">
@@ -278,7 +278,7 @@ function About() {
       <section className="card">
         <h3>Integrations</h3>
         <p className="muted small">
-          Set these in <code>aether.config.json</code> (or as <code>AETHER_*</code> environment variables), then restart the launcher.
+          Set these in <code>kite.config.json</code> (or as <code>KITE_*</code> environment variables), then restart the launcher.
         </p>
         <ul className="integrations">
           {ITEMS.map((i) => (
@@ -297,10 +297,10 @@ function About() {
           <p className={app.online?.signed_in ? "hint ok-text" : "hint"}>
             {app.online?.signed_in ? (
               <>
-                <ICheck size={13} /> Signed in to the Aether service as {app.online.name}.
+                <ICheck size={13} /> Signed in to the Kite service as {app.online.name}.
               </>
             ) : (
-              app.online?.error ?? "Not signed in to the Aether service yet."
+              app.online?.error ?? "Not signed in to the Kite service yet."
             )}
           </p>
         )}

@@ -7,7 +7,7 @@ import { Cover, Spinner } from "../../components/ui";
 import { coverOf } from "../../lib/art";
 import { ago, megabytes } from "../../lib/format";
 import { effective } from "../../lib/overrides";
-import { clientSupported, groupOf, listText, LOADER_NAMES, profileLabel } from "../../lib/versions";
+import { clientSupported, forgeNote, groupOf, isForgeLike, listText, LOADER_NAMES, profileLabel } from "../../lib/versions";
 import { LoaderChoice, LoaderPicker, MinorPicker } from "./pickers";
 import { ProfileSettings } from "./ProfileSettings";
 
@@ -86,11 +86,15 @@ export function ProfilePanel({ profile, onClose }: { profile: Profile | null; on
             )}
             {m.kind === "client" && (
               <p className="hint">
-                {loaderValue === "builtin" ? "Vanilla loads only Kite's built-in mods, not mods from other loaders." : `Kite's built-in mods plus the ${LOADER_NAMES[p.loader]} mods in this profile.`}
+                {loaderValue === "builtin"
+                  ? "Vanilla loads only Kite's built-in mods, not mods from other loaders."
+                  : isForgeLike(p.loader)
+                    ? forgeNote(p.loader)
+                    : `Kite's built-in mods plus the ${LOADER_NAMES[p.loader]} mods in this profile.`}
               </p>
             )}
-            {m.kind === "client" && app.aetherVersions.length > 0 && !clientSupported(p.mc_version, p.loader, app.aetherVersions) && (
-              <p className="note warning">The Kite client supports {listText(app.aetherVersions)} today. This version starts without built-in mods.</p>
+            {m.kind === "client" && !isForgeLike(p.loader) && app.kiteVersions.length > 0 && !clientSupported(p.mc_version, p.loader, app.kiteVersions) && (
+              <p className="note warning">The Kite client supports {listText(app.kiteVersions)} today. This version starts without built-in mods.</p>
             )}
           </section>
         </div>

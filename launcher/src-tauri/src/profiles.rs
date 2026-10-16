@@ -1,11 +1,11 @@
 //! Profiles, global settings, version lists and Java detection.
 use crate::{e, AppState, Res};
-use aether_core::config::ConfigStatus;
-use aether_core::java::{self, JavaInstall};
-use aether_core::loader::{self, LoaderVersion};
-use aether_core::profile::{Loader, Profile};
-use aether_core::settings::GameSettings;
-use aether_core::version::Manifest;
+use kite_core::config::ConfigStatus;
+use kite_core::java::{self, JavaInstall};
+use kite_core::loader::{self, LoaderVersion};
+use kite_core::profile::{Loader, Profile};
+use kite_core::settings::GameSettings;
+use kite_core::version::Manifest;
 use serde::Serialize;
 use tauri::{AppHandle, Manager, State};
 
@@ -143,16 +143,16 @@ pub async fn loader_versions(s: State<'_, AppState>, loader: Loader, mc_version:
     loader::versions(s.api.http(), loader, &mc_version).await.map_err(e)
 }
 
-/// Game versions the Aether client runs on (Fabric and Quilt).
+/// Game versions the Kite client runs on (Fabric and Quilt).
 #[tauri::command]
-pub fn aether_versions() -> Vec<&'static str> {
-    aether_core::runtime::SUPPORTED.iter().map(|(v, _)| *v).collect()
+pub fn kite_versions() -> Vec<&'static str> {
+    kite_core::runtime::SUPPORTED.iter().map(|(v, _)| *v).collect()
 }
 
 /// Java installations found on this computer, with their versions.
 #[tauri::command]
 pub async fn list_javas(s: State<'_, AppState>) -> Res<Vec<JavaInstall>> {
-    let layout = aether_core::download::Layout::new(&s.root);
+    let layout = kite_core::download::Layout::new(&s.root);
     let found = futures::future::join_all(java::candidates(&layout).into_iter().map(|p| async move { java::probe(&p).await.ok() })).await;
     let mut list: Vec<JavaInstall> = found.into_iter().flatten().collect();
     list.sort_by(|a, b| b.major.cmp(&a.major).then(a.path.cmp(&b.path)));
