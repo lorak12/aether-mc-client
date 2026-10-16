@@ -36,7 +36,10 @@ __pycache__/
 Thumbs.db
 .idea/
 
-# Agent tooling and scratch (local workflow state, not part of the project)
-.ay/
-.impeccable/
+# Agent tooling: task locks are per-machine, the rest of .ay/ is tracked
+.ay/locks/
+.ay/tracking/locks/
+.impeccable/questions/*.log
+
+# Agent scratch
 .playwright-mcp/
