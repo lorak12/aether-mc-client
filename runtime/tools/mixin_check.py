@@ -3,7 +3,7 @@
     python tools/mixin_check.py <adapter dir, e.g. v1_21_10 or legacy/v1_8_9> [<minecraft jar>]
 
 Reads the adapter's preprocessed sources (build/generated/shared-src plus its own src/main/java; run
-`gradlew :<adapter>:sharedSources` first) and checks every mixin in gg/aether/client/mixin against the Mojang-mapped
+`gradlew :<adapter>:sharedSources` first) and checks every mixin in gg/kite/client/mixin against the Mojang-mapped
 Minecraft jar Loom made for that version:
   - @Mixin targets exist
   - injector `method = ...` selectors match a method (name, and descriptor when given)
@@ -29,7 +29,7 @@ def find_jar(mc, yarn=False):
         if not cands:
             return None
         src = max(cands, key=lambda p: os.stat(long_path(p)).st_mtime)
-        dst = Path(tempfile.gettempdir()) / f"aether-mixin-check-{mc}.jar"
+        dst = Path(tempfile.gettempdir()) / f"kite-mixin-check-{mc}.jar"
         if not dst.exists() or os.stat(long_path(src)).st_mtime > dst.stat().st_mtime:
             shutil.copyfile(long_path(src), dst)
         return str(dst)
@@ -233,7 +233,7 @@ def check(adapter, jar=None):
         sys.exit(f"no Minecraft jar for {mc}: build the adapter once so Loom makes it")
     files = {}
     for root in (adir / "build/generated/shared-src", adir / "src/main/java"):
-        for f in (root / "gg/aether/client/mixin").glob("*.java"):
+        for f in (root / "gg/kite/client/mixin").glob("*.java"):
             files[f.name] = f  # own src wins
     problems = []
     for f in sorted(files.values()):

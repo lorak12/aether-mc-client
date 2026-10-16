@@ -23,7 +23,7 @@ for a in $adapters; do
     fi
     if [ $audit = 1 ]; then
         $gradle $build ":$task:runAudit" -q --console=plain > "$log-audit.log" 2>&1
-        if grep -aq "\[aether-audit\] finished" "$log-audit.log" && ! grep -aq "Mixin apply.*failed\|InvalidInjection\|aether-audit\] FAILED" "$log-audit.log"; then
+        if grep -aq "\[kite-audit\] finished" "$log-audit.log" && ! grep -aq "Mixin apply.*failed\|InvalidInjection\|kite-audit\] FAILED" "$log-audit.log"; then
             echo "ok (built, checked, booted)"
         else
             echo "AUDIT FAILED ($log-audit.log)"; grep -a "Mixin apply.*failed\|InvalidInjection\|FAILED" "$log-audit.log" | head -3 | cut -c1-300; fail=1

@@ -15,19 +15,19 @@ dependencies {
 loom {
     runs {
         // Config and worlds live in runtime/v1_21_1/run; the in-game menu opens with Right Shift.
-        named("client") { programArgs("--username", "AetherDev") }
-        // In-game smoke test: joins run/saves/AetherTest, screenshots every feature, quits. See DevAutotest.
+        named("client") { programArgs("--username", "KiteDev") }
+        // In-game smoke test: joins run/saves/KiteTest, screenshots every feature, quits. See DevAutotest.
         register("autotest") {
             inherit(getByName("client"))
-            configName = "Aether Autotest"
-            programArgs("--quickPlaySingleplayer", "AetherTest")
-            vmArg("-Daether.autotest=true")
+            configName = "Kite Autotest"
+            programArgs("--quickPlaySingleplayer", "KiteTest")
+            vmArg("-Dkite.autotest=true")
         }
         // Mixin audit: loads every mixin target at the title screen and quits; a broken hook fails the run.
         register("audit") {
             inherit(getByName("client"))
-            configName = "Aether Mixin Audit"
-            vmArgs("-Daether.audit=true", "-Dmixin.debug.countInjections=true")
+            configName = "Kite Mixin Audit"
+            vmArgs("-Dkite.audit=true", "-Dmixin.debug.countInjections=true")
         }
     }
 }

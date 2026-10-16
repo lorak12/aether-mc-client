@@ -14,16 +14,16 @@ dependencies {
 
 loom {
     runs {
-        named("client") { programArgs("--username", "AetherDev") }
+        named("client") { programArgs("--username", "KiteDev") }
         register("autotest") {
             inherit(getByName("client"))
-            configName = "Aether Autotest"
-            vmArg("-Daether.autotest=true")
+            configName = "Kite Autotest"
+            vmArg("-Dkite.autotest=true")
         }
         register("audit") {
             inherit(getByName("client"))
-            configName = "Aether Mixin Audit"
-            vmArgs("-Daether.audit=true", "-Dmixin.debug.countInjections=true")
+            configName = "Kite Mixin Audit"
+            vmArgs("-Dkite.audit=true", "-Dmixin.debug.countInjections=true")
         }
     }
 }
