@@ -1,24 +1,42 @@
+# Build output and dependency caches
 target/
 node_modules/
 dist/
-.playwright-mcp/
-launcher/src-tauri/gen/
-launcher/ui/src/tokens.css
-*.part
-.env
-aether.config.json
 runtime/build/
 runtime/.gradle/
 runtime/*/build/
 runtime/*/bin/
 runtime/**/build/
-runtime/*/run/
 runtime/**/.gradle/
-runtime/**/run/
-.impeccable/questions/*.log
+launcher/src-tauri/gen/
 *.hprof
+
+# Local game runs and test worlds (dev only)
+runtime/*/run/
+runtime/**/run/
+
+# Generated files
+launcher/ui/src/tokens.css
+
+# Local secrets and config
+.env
+kite.config.json
+
+# Local databases and seeds
 *.db
 *.db-shm
 *.db-wal
-
 backend/seed/local/
+
+# Downloads and temporary files
+*.part
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+.idea/
+
+# Agent tooling and scratch (local workflow state, not part of the project)
+.ay/
+.impeccable/
+.playwright-mcp/
