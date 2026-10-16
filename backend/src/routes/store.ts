@@ -5,7 +5,7 @@ import { z } from "zod";
 import type { Ctx } from "../app.js";
 import { createCheckout, verifyWebhook, type TebexWebhook } from "../tebex.js";
 
-const page = (title: string, text: string) => `<!doctype html><meta charset="utf-8"><title>Aether</title>
+const page = (title: string, text: string) => `<!doctype html><meta charset="utf-8"><title>Kite</title>
 <style>body{margin:0;height:100vh;display:grid;place-items:center;background:#0b0d14;color:#e8ebf5;font:16px system-ui,sans-serif}
 div{text-align:center;max-width:420px;padding:24px}h1{font-size:22px;margin:0 0 8px}p{color:#9aa3b8;margin:0}</style>
 <div><h1>${title}</h1><p>${text}</p></div>`;
@@ -41,7 +41,7 @@ export function registerStore(app: FastifyInstance, ctx: Ctx) {
     for (const file of ["icon.png", "texture.png"]) {
       try {
         const png = await readFile(join(cfg.cosmeticsDir, c.asset, file));
-        return reply.header("content-type", "image/png").header("cache-control", "public, max-age=86400").header("x-aether-art", file).send(png);
+        return reply.header("content-type", "image/png").header("cache-control", "public, max-age=86400").header("x-kite-art", file).send(png);
       } catch {
         /* next */
       }
@@ -96,7 +96,7 @@ export function registerStore(app: FastifyInstance, ctx: Ctx) {
     const ok = (req.query as { status?: string }).status === "complete";
     return reply
       .type("text/html")
-      .send(ok ? page("Thanks for your purchase", "Your coins arrive in a moment. You can close this tab and go back to Aether.") : page("Payment cancelled", "Nothing was charged. You can close this tab."));
+      .send(ok ? page("Thanks for your purchase", "Your coins arrive in a moment. You can close this tab and go back to Kite.") : page("Payment cancelled", "Nothing was charged. You can close this tab."));
   });
 
   app.post("/v1/webhooks/tebex", async (req, reply) => {

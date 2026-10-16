@@ -1,7 +1,7 @@
 /**
  * Accounts with unlimited coins: buying in the store grants the item without charging. Matched by Minecraft name,
  * ignoring case. Names are Mojang-verified on /v1/auth/mojang; offline (dev) sign-ins can pick any name, which is why
- * AETHER_ALLOW_OFFLINE is refused in production. More names can be added with AETHER_ADMINS="name1,name2".
+ * KITE_ALLOW_OFFLINE is refused in production. More names can be added with KITE_ADMINS="name1,name2".
  */
 export const ADMINS: readonly string[] = ["nakii14"];
 

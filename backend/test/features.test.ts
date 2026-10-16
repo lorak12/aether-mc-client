@@ -13,7 +13,7 @@ const BUNDLES = JSON.stringify([{ id: "5001", coins: 1000, bonus: 100, price: "â
 
 function setup(extra: Record<string, string> = {}, fetchImpl?: typeof fetch) {
   let t = 1_000_000;
-  const cfg = loadConfig({ AETHER_JWT_SECRET: "x".repeat(32), AETHER_ADMIN_TOKEN: "adm", ...extra } as NodeJS.ProcessEnv);
+  const cfg = loadConfig({ KITE_JWT_SECRET: "x".repeat(32), KITE_ADMIN_TOKEN: "adm", ...extra } as NodeJS.ProcessEnv);
   const users: Record<string, string> = { alice: A, bob: B, carol: C };
   const app = buildApp(cfg, new MemoryStore(), async (name) => (users[name] ? { uuid: users[name], name } : null), () => t, fetchImpl);
   const login = async (name: string) => {
@@ -34,7 +34,7 @@ describe("offline sign-in", () => {
   it("is refused unless enabled, and uses the launcher's offline uuid", async () => {
     const off = setup();
     expect((await off.app.inject({ method: "POST", url: "/v1/auth/offline", payload: { username: "Dev" } })).statusCode).toBe(403);
-    const on = setup({ AETHER_ALLOW_OFFLINE: "1" });
+    const on = setup({ KITE_ALLOW_OFFLINE: "1" });
     const r = await on.app.inject({ method: "POST", url: "/v1/auth/offline", payload: { username: "Steve_Dev" } });
     expect(r.statusCode).toBe(200);
     expect(r.json().uuid).toBe(offlineUuid("Steve_Dev"));
@@ -47,7 +47,7 @@ describe("offline sign-in", () => {
   });
 
   it("can't be enabled in production", () => {
-    expect(() => loadConfig({ NODE_ENV: "production", AETHER_JWT_SECRET: "x", AETHER_ALLOW_OFFLINE: "1" } as NodeJS.ProcessEnv)).toThrow();
+    expect(() => loadConfig({ NODE_ENV: "production", KITE_JWT_SECRET: "x", KITE_ALLOW_OFFLINE: "1" } as NodeJS.ProcessEnv)).toThrow();
   });
 });
 
@@ -137,7 +137,7 @@ describe("messages", () => {
 
 describe("store", () => {
   it("buys with coins, keeps a ledger, unlocks the loadout", async () => {
-    const { login, as, admin } = setup({ AETHER_WELCOME_COINS: "500" });
+    const { login, as, admin } = setup({ KITE_WELCOME_COINS: "500" });
     const a = as(await login("alice"));
     expect((await a.get("/v1/me")).json().coins).toBe(500);
     const store = (await a.get("/v1/store")).json();
@@ -152,11 +152,11 @@ describe("store", () => {
     expect((await a.post("/v1/store/buy", { id: "hat-bandana" })).json().error).toBe("already_owned");
     expect((await a.post("/v1/store/buy", { id: "cape-founder" })).json().error).toBe("not_for_sale");
     const labels = (await a.get("/v1/me/transactions")).json().transactions.map((t: { label: string; coins: number }) => [t.label, t.coins]);
-    expect(labels).toEqual([["Angel Wings", -600], ["Gift", 200], ["Welcome to Aether", 500]]);
+    expect(labels).toEqual([["Angel Wings", -600], ["Gift", 200], ["Welcome to Kite", 500]]);
   });
 
   it("welcome coins are given once", async () => {
-    const { login, as } = setup({ AETHER_WELCOME_COINS: "50" });
+    const { login, as } = setup({ KITE_WELCOME_COINS: "50" });
     await login("alice");
     const a = as(await login("alice"));
     expect((await a.get("/v1/me")).json().coins).toBe(50);
@@ -166,7 +166,7 @@ describe("store", () => {
 describe("tebex", () => {
   const secret = "whsec";
   const sign = (raw: string) => createHmac("sha256", secret).update(createHash("sha256").update(raw).digest("hex")).digest("hex");
-  const env = { AETHER_TEBEX_PUBLIC_TOKEN: "pub", AETHER_TEBEX_WEBHOOK_SECRET: secret, AETHER_COIN_BUNDLES: BUNDLES };
+  const env = { KITE_TEBEX_PUBLIC_TOKEN: "pub", KITE_TEBEX_WEBHOOK_SECRET: secret, KITE_COIN_BUNDLES: BUNDLES };
 
   it("verifies signatures", () => {
     expect(verifyWebhook("{}", sign("{}"), secret)).toBe(true);

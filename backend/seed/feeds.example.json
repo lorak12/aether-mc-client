@@ -1,20 +1,20 @@
 {
-  "_how": "PUT each array to /v1/admin/feeds/<name> with the admin token, e.g. curl -X PUT -H 'authorization: Bearer $AETHER_ADMIN_TOKEN' -H 'content-type: application/json' --data @news.json http://localhost:8787/v1/admin/feeds/news",
+  "_how": "PUT each array to /v1/admin/feeds/<name> with the admin token, e.g. curl -X PUT -H 'authorization: Bearer $KITE_ADMIN_TOKEN' -H 'content-type: application/json' --data @news.json http://localhost:8787/v1/admin/feeds/news",
   "news": [
     {
       "id": "launcher-1",
       "tag": "Update",
-      "title": "The new Aether launcher",
+      "title": "The new Kite launcher",
       "excerpt": "Friends, chat, the store, CurseForge and Forge profiles.",
       "body": ["First paragraph.", "Second paragraph."],
       "image": "https://example.com/news/launcher.png",
       "date": 1791504000000,
       "size": "lg",
-      "link": "https://github.com/lorak12/aether-mc-client/releases"
+      "link": "https://github.com/lorak12/kite-mc-client/releases"
     }
   ],
   "banners": [
-    { "id": "welcome", "variant": "info", "text": "Welcome to Aether.", "link": { "label": "Read the news", "page": "news" } }
+    { "id": "welcome", "variant": "info", "text": "Welcome to Kite.", "link": { "label": "Read the news", "page": "news" } }
   ],
   "servers": [
     {

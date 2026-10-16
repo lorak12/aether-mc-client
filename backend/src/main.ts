@@ -7,7 +7,7 @@ const cfg = loadConfig();
 const store = new SqliteStore(cfg.dbPath);
 const app = buildApp(cfg, store, mojangVerifier);
 app.listen({ port: cfg.port, host: "0.0.0.0" }).then(() => {
-  console.log(`aether-backend on :${cfg.port} (database ${cfg.dbPath})`);
-  if (cfg.allowOffline) console.warn("AETHER_ALLOW_OFFLINE is on: offline accounts can sign in. Development only.");
+  console.log(`kite-backend on :${cfg.port} (database ${cfg.dbPath})`);
+  if (cfg.allowOffline) console.warn("KITE_ALLOW_OFFLINE is on: offline accounts can sign in. Development only.");
   if (!cfg.tebex) console.log("Tebex not configured: buying coins is off.");
 });

@@ -21,7 +21,7 @@ export interface Config {
   manifestSeedHex?: string;
   /** Bearer token for /v1/admin/*. Admin routes are disabled when unset. */
   adminToken?: string;
-  /** Extra names with unlimited coins on top of src/admins.ts (AETHER_ADMINS, comma separated). */
+  /** Extra names with unlimited coins on top of src/admins.ts (KITE_ADMINS, comma separated). */
   admins: string[];
   presenceTtlMs: number;
   /** Development: let offline (unverified) accounts sign in. Never in production. */
@@ -37,29 +37,29 @@ export interface Config {
 }
 
 export function loadConfig(env = process.env): Config {
-  const secret = env.AETHER_JWT_SECRET;
+  const secret = env.KITE_JWT_SECRET;
   const production = env.NODE_ENV === "production";
-  if (!secret && production) throw new Error("AETHER_JWT_SECRET is required in production");
-  const allowOffline = env.AETHER_ALLOW_OFFLINE === "1";
-  if (allowOffline && production) throw new Error("AETHER_ALLOW_OFFLINE must not be set in production");
+  if (!secret && production) throw new Error("KITE_JWT_SECRET is required in production");
+  const allowOffline = env.KITE_ALLOW_OFFLINE === "1";
+  if (allowOffline && production) throw new Error("KITE_ALLOW_OFFLINE must not be set in production");
   const port = Number(env.PORT ?? 8787);
   let bundles: Bundle[] = [];
-  if (env.AETHER_COIN_BUNDLES) bundles = z.array(Bundle).parse(JSON.parse(env.AETHER_COIN_BUNDLES));
-  const tebex = env.AETHER_TEBEX_PUBLIC_TOKEN && env.AETHER_TEBEX_WEBHOOK_SECRET ? { publicToken: env.AETHER_TEBEX_PUBLIC_TOKEN, webhookSecret: env.AETHER_TEBEX_WEBHOOK_SECRET } : undefined;
+  if (env.KITE_COIN_BUNDLES) bundles = z.array(Bundle).parse(JSON.parse(env.KITE_COIN_BUNDLES));
+  const tebex = env.KITE_TEBEX_PUBLIC_TOKEN && env.KITE_TEBEX_WEBHOOK_SECRET ? { publicToken: env.KITE_TEBEX_PUBLIC_TOKEN, webhookSecret: env.KITE_TEBEX_WEBHOOK_SECRET } : undefined;
   return {
     port,
     // Dev fallback: random per process (tokens die on restart), never a guessable constant.
     jwtSecret: new TextEncoder().encode(secret ?? randomBytes(32).toString("hex")),
-    dbPath: env.AETHER_DB ?? "aether.db",
-    manifestSeedHex: env.AETHER_MANIFEST_SEED,
-    adminToken: env.AETHER_ADMIN_TOKEN,
-    admins: (env.AETHER_ADMINS ?? "").split(",").map((n) => n.trim()).filter(Boolean),
+    dbPath: env.KITE_DB ?? "kite.db",
+    manifestSeedHex: env.KITE_MANIFEST_SEED,
+    adminToken: env.KITE_ADMIN_TOKEN,
+    admins: (env.KITE_ADMINS ?? "").split(",").map((n) => n.trim()).filter(Boolean),
     presenceTtlMs: 90_000,
     allowOffline,
-    welcomeCoins: Number(env.AETHER_WELCOME_COINS ?? 0),
+    welcomeCoins: Number(env.KITE_WELCOME_COINS ?? 0),
     tebex,
     bundles,
-    publicUrl: (env.AETHER_PUBLIC_URL ?? `http://localhost:${port}`).replace(/\/$/, ""),
-    cosmeticsDir: env.AETHER_COSMETICS_DIR ?? new URL("../../runtime/core/src/main/resources/aether/cosmetics/", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"),
+    publicUrl: (env.KITE_PUBLIC_URL ?? `http://localhost:${port}`).replace(/\/$/, ""),
+    cosmeticsDir: env.KITE_COSMETICS_DIR ?? new URL("../../runtime/core/src/main/resources/kite/cosmetics/", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1"),
   };
 }

@@ -9,7 +9,7 @@ const UUID_B = "22222222222222222222222222222222";
 
 function setup(extra: Record<string, string> = {}) {
   let t = 1_000_000;
-  const cfg = loadConfig({ AETHER_JWT_SECRET: "x".repeat(32), AETHER_ADMIN_TOKEN: "adm", ...extra } as any);
+  const cfg = loadConfig({ KITE_JWT_SECRET: "x".repeat(32), KITE_ADMIN_TOKEN: "adm", ...extra } as any);
   const store = new MemoryStore();
   const users: Record<string, string> = { alice: UUID_A, bob: UUID_B };
   const app = buildApp(cfg, store, async (name) => (users[name] ? { uuid: users[name], name } : null), () => t);
@@ -52,7 +52,7 @@ describe("loadout", () => {
     const { app, login, auth } = setup();
     const { token } = await login("alice");
     const put = (payload: object) => app.inject({ method: "PUT", url: "/v1/me/loadout", headers: auth(token), payload });
-    expect((await put({ cape: "cape-aether" })).statusCode).toBe(200); // free
+    expect((await put({ cape: "cape-kite" })).statusCode).toBe(200); // free
     expect((await put({ cape: "cape-founder" })).statusCode).toBe(403); // not owned
     expect((await put({ wings: "wings-fairy" })).statusCode).toBe(200); // free starter
     expect((await put({ wings: "wings-angel" })).statusCode).toBe(403); // epic: bought in the store
@@ -64,10 +64,10 @@ describe("loadout", () => {
     const { app, login, auth } = setup();
     const { token } = await login("alice");
     const put = (payload: object) => app.inject({ method: "PUT", url: "/v1/me/loadout?lenient=1", headers: auth(token), payload });
-    await put({ cape: "cape-aether" });
+    await put({ cape: "cape-kite" });
     const r = await put({ cape: "cape-founder", wings: "wings-fairy", hat: "wings-fairy", ears: null });
     expect(r.statusCode).toBe(200);
-    expect(r.json()).toEqual({ loadout: { cape: "cape-aether", wings: "wings-fairy" }, rejected: ["cape-founder", "wings-fairy"] });
+    expect(r.json()).toEqual({ loadout: { cape: "cape-kite", wings: "wings-fairy" }, rejected: ["cape-founder", "wings-fairy"] });
   });
 
   it("admin grant unlocks, revoke unequips", async () => {
@@ -89,12 +89,12 @@ describe("presence", () => {
     const { app, login, auth, advance } = setup();
     const a = await login("alice");
     const b = await login("bob");
-    await app.inject({ method: "PUT", url: "/v1/me/loadout", headers: auth(a.token), payload: { cape: "cape-aether" } });
+    await app.inject({ method: "PUT", url: "/v1/me/loadout", headers: auth(a.token), payload: { cape: "cape-kite" } });
     await app.inject({ method: "POST", url: "/v1/presence/heartbeat", headers: auth(a.token), payload: { server: "mc.example.com" } });
     const lookup = () => app.inject({ method: "POST", url: "/v1/presence/lookup", headers: auth(b.token), payload: { uuids: [UUID_A, UUID_B, "33333333333333333333333333333333"] } });
     let users = (await lookup()).json().users;
     expect(Object.keys(users)).toEqual([UUID_A]);
-    expect(users[UUID_A]).toEqual({ badge: true, loadout: { cape: "cape-aether" } });
+    expect(users[UUID_A]).toEqual({ badge: true, loadout: { cape: "cape-kite" } });
     advance(91_000);
     users = (await lookup()).json().users;
     expect(users).toEqual({});
@@ -112,7 +112,7 @@ describe("manifest", () => {
   it("signs with ed25519 and the signature verifies", async () => {
     const { privateKey, publicKey } = generateKeyPairSync("ed25519");
     const seed = privateKey.export({ format: "der", type: "pkcs8" }).subarray(-32).toString("hex");
-    const { app } = setup({ AETHER_MANIFEST_SEED: seed });
+    const { app } = setup({ KITE_MANIFEST_SEED: seed });
     const put = await app.inject({ method: "PUT", url: "/v1/admin/manifest/stable", headers: { authorization: "Bearer adm" }, payload: { runtimes: [{ mc: "1.8.9", version: "1.0.0" }] } });
     expect(put.statusCode).toBe(200);
     const got = (await app.inject({ method: "GET", url: "/v1/manifest/stable" })).json();
@@ -130,7 +130,7 @@ describe("manifest", () => {
 
 describe("admins", () => {
   function adminSetup(extra: Record<string, string> = {}) {
-    const cfg = loadConfig({ AETHER_JWT_SECRET: "x".repeat(32), ...extra } as any);
+    const cfg = loadConfig({ KITE_JWT_SECRET: "x".repeat(32), ...extra } as any);
     const store = new MemoryStore();
     const users: Record<string, string> = { Nakii14: UUID_A, bob: UUID_B };
     const app = buildApp(cfg, store, async (name) => (users[name] ? { uuid: users[name], name } : null));
@@ -159,14 +159,14 @@ describe("admins", () => {
     expect(tx.transactions).toEqual([]);
   });
 
-  it("charges everyone else, and AETHER_ADMINS adds names", async () => {
+  it("charges everyone else, and KITE_ADMINS adds names", async () => {
     const plain = adminSetup();
     const bob = await plain.login("bob");
     const me = (await plain.app.inject({ method: "GET", url: "/v1/me", headers: bob })).json();
     expect(me.unlimited).toBe(false);
     expect((await plain.app.inject({ method: "POST", url: "/v1/store/buy", headers: bob, payload: { id: "cape-galaxy" } })).statusCode).toBe(402);
 
-    const extra = adminSetup({ AETHER_ADMINS: "someone, BOB" });
+    const extra = adminSetup({ KITE_ADMINS: "someone, BOB" });
     const bob2 = await extra.login("bob");
     expect((await extra.app.inject({ method: "POST", url: "/v1/store/buy", headers: bob2, payload: { id: "cape-galaxy" } })).statusCode).toBe(200);
   });
@@ -174,7 +174,7 @@ describe("admins", () => {
 
 describe("published cosmetics", () => {
   function pubSetup() {
-    const cfg = loadConfig({ AETHER_JWT_SECRET: "x".repeat(32), AETHER_WELCOME_COINS: "500" } as any);
+    const cfg = loadConfig({ KITE_JWT_SECRET: "x".repeat(32), KITE_WELCOME_COINS: "500" } as any);
     const store = new MemoryStore();
     const users: Record<string, string> = { nakii14: UUID_A, bob: UUID_B };
     const app = buildApp(cfg, store, async (name) => (users[name] ? { uuid: users[name], name } : null));

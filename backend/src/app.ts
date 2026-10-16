@@ -93,7 +93,7 @@ export function buildApp(cfg: Config, store: Store, verify: Verifier, now: () =>
   async function issue(uuid: string, name: string) {
     const first = !(await store.user(uuid));
     await store.upsertUser(uuid, name, now());
-    if (first && cfg.welcomeCoins > 0) await store.addCoins(uuid, cfg.welcomeCoins, "Welcome to Aether", now(), `welcome:${uuid}`);
+    if (first && cfg.welcomeCoins > 0) await store.addCoins(uuid, cfg.welcomeCoins, "Welcome to Kite", now(), `welcome:${uuid}`);
     const token = await new SignJWT({ name })
       .setProtectedHeader({ alg: "HS256" })
       .setSubject(uuid)
@@ -156,7 +156,7 @@ export function buildApp(cfg: Config, store: Store, verify: Verifier, now: () =>
     return issue(normUuid(id.uuid), id.name);
   });
 
-  // Development only: offline accounts can't prove ownership, so this is off unless AETHER_ALLOW_OFFLINE=1.
+  // Development only: offline accounts can't prove ownership, so this is off unless KITE_ALLOW_OFFLINE=1.
   app.post("/v1/auth/offline", async (req, reply) => {
     if (!cfg.allowOffline) return reply.code(403).send({ error: "offline_disabled" });
     const body = z.object({ username: NAME }).safeParse(req.body);
