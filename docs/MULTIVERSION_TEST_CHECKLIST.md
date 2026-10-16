@@ -5,13 +5,13 @@ Every adapter below builds, passes `runtime/tools/mixin_check.py` and boots thro
 Versions: 1.7.10, 1.8.9, 1.12.2, 1.16.5, 1.17.1, 1.18.2, 1.19, 1.19.2, 1.19.3, 1.19.4, 1.20, 1.20.1-1.20.6, 1.21, 1.21.1, 1.21.3-1.21.11, 26.1, 26.1.1, 26.1.2, 26.2, 26.3.
 
 ## Every version
-1. Title screen is the Aether menu (vanilla button "Aether menu" brings it back from the vanilla title screen). Right Shift opens the hub in a world and in a menu.
+1. Title screen is the Kite menu (vanilla button "Kite menu" brings it back from the vanilla title screen). Right Shift opens the hub in a world and in a menu.
 2. HUD: FPS, CPS, coordinates, armor, potions, keystrokes draw in the right place; HUD editor drags/scales.
 3. Zoom (C, scroll changes the level), freelook (V), fullbright (G); settings in options.txt are not changed afterwards (check `options.txt` for gamma / fov after quitting).
 4. Wardrobe: icons show, preview turns, equip a hat, a back item and a cape: they appear on your player in third person (F5) and on other players that run the client.
 5. Wavy capes on/off; a cosmetic cape with and without a Mojang cape.
-6. Badge before client users' names (nametag and tab list). 1.21.11+ draws the Kite mark; older versions draw a coloured "Λ".
-7. Chat: timestamps, "(xN)" stacking, tabs, hide chat, name replacement (Streamer mode) and the server channel `aether:client` (a plugin that sends HUD lines).
+6. Badge before client users' names (nametag and tab list). 1.21.11+ draws the Kite mark; older versions draw a coloured "◆".
+7. Chat: timestamps, "(xN)" stacking, tabs, hide chat, name replacement (Streamer mode) and the server channel `kite:client` (a plugin that sends HUD lines).
 
 ## Versions before 1.21.2 (no render state: new code paths)
 - Item Physics on/off (items lie flat, stack layers), item bob / spin / scale, hide item shadows.

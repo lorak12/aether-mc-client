@@ -6,7 +6,7 @@ The audit of 2026-10-09 listed 54 things in the launcher that were fake, hardcod
 
 | # | Item | Now |
 |---|------|-----|
-| 1, 40 | Check for updates, self-update | Signed manifest from the backend (`/v1/manifest/stable`), Ed25519-verified with `manifest_public_key`; downloads the installer for this platform, checks SHA-256, runs it. The menu item only shows when updates are configured. The Aether client jar also updates from the manifest before launch. |
+| 1, 40 | Check for updates, self-update | Signed manifest from the backend (`/v1/manifest/stable`), Ed25519-verified with `manifest_public_key`; downloads the installer for this platform, checks SHA-256, runs it. The menu item only shows when updates are configured. The Kite client jar also updates from the manifest before launch. |
 | 2 | Upload logs | "Share logs" uploads the launcher log (now written to `logs/launcher.log`) and the profile's latest game log to mclo.gs, with access tokens removed first. Also on the crash card. |
 | 3 | Export .mrpack | Save dialog, pack name/version, extra folders to include. Modrinth content becomes downloads; hand-added files and chosen folders go into `overrides/`; disabled content is left out. |
 | 4, 5, 13 | Worlds | Read from `saves/*/level.dat` (name, mode, version, last played, size, icon). Play straight into a world (1.20+), back up to `backups/`, restore, delete (type the name to confirm). |
@@ -27,7 +27,7 @@ The audit of 2026-10-09 listed 54 things in the launcher that were fake, hardcod
 | 30–33 | Resolution, fullscreen, hooks, env | Applied at launch. Hooks run in the game folder with `INST_ID`, `INST_NAME`, `INST_DIR`, `INST_MC_DIR`, `INST_JAVA`; a failing pre-launch command stops the launch. |
 | 31 | Game directory | Removed globally; per profile "Game folder" instead. |
 | 34 | Storage | Profile format 2 (`overrides`, `meta`, `loader_version`, `game_dir` in `profile.json`) and `settings.json`. Old localStorage data migrates once, including disabled mods. |
-| 35 | Built-in mods only | The loader gets a mods folder with just the Aether jar (`fabric.modsFolder` / `loader.modsDir`). |
+| 35 | Built-in mods only | The loader gets a mods folder with just the Kite jar (`fabric.modsFolder` / `loader.modsDir`). |
 | 36 | Language pref | Removed (there's no translation yet). |
 | 38 | Forge / NeoForge | Installer processors run with the profile's Java and are cached under `loaders/`. Live-tested: Forge 1.20.1, NeoForge 1.21.1, Forge 1.12.2 boot. |
 | 39 | Stop the game | Stop on Home, the profile card, the profile panel, Ctrl+K and the tray; kills the whole process tree. Also cancels a launch that's still preparing. |
@@ -38,8 +38,8 @@ The audit of 2026-10-09 listed 54 things in the launcher that were fake, hardcod
 | 45 | Profile card Play | Launches (or stops the running game). |
 | 46 | Placeholder links | Help and source link to the GitHub repo; the privacy and terms entries are gone until those pages exist. |
 | 47 | Ad slot | Removed. |
-| 48 | User agent | `lorak12/aether-mc-client/<version> (https://github.com/lorak12/aether-mc-client)`. |
-| 49 | Supported versions | One table in `runtime.rs`, read by the UI through `aether_versions`. |
+| 48 | User agent | `lorak12/kite-mc-client/<version> (https://github.com/lorak12/kite-mc-client)`. |
+| 49 | Supported versions | One table in `runtime.rs`, read by the UI through `kite_versions`. |
 | 50 | Licenses | `npm run licenses` generates `src/licenses.json` from `cargo metadata` and the npm lockfile (runs in `npm run build`); searchable list in the app. |
 | 51 | Skin heads from mc-heads.net | Kept (works, cached by the browser). |
 | 52 | Covers | Upload your own image (copied into the profile, shown through the asset protocol). |
@@ -48,10 +48,10 @@ The audit of 2026-10-09 listed 54 things in the launcher that were fake, hardcod
 | Cleanup | | `search_content` and `has_account` removed, `api/mock` deleted, preview hints gone. The browser dev mock (`src/devMock.ts`) stays for `npm run dev` only. |
 
 ## Still to do outside the code
-- **Deploy the backend** somewhere public with `AETHER_JWT_SECRET`, `AETHER_ADMIN_TOKEN` and a persistent `AETHER_DB`, then set `backend_url` for players.
+- **Deploy the backend** somewhere public with `KITE_JWT_SECRET`, `KITE_ADMIN_TOKEN` and a persistent `KITE_DB`, then set `backend_url` for players.
 - **Azure**: add `http://localhost` as a "Mobile and desktop applications" redirect URI for browser sign-in.
 - **Tebex**: create the store (Headless API, no username sign-in), one package per coin bundle, a webhook to `/v1/webhooks/tebex`. Checkout and webhook handling are tested against fakes, not a live Tebex store.
-- **Releases**: generate an Ed25519 key pair, set `AETHER_MANIFEST_SEED` on the backend and `manifest_public_key` in the shipped config, build with the MSVC toolchain, publish the manifest.
+- **Releases**: generate an Ed25519 key pair, set `KITE_MANIFEST_SEED` on the backend and `manifest_public_key` in the shipped config, build with the MSVC toolchain, publish the manifest.
 - ~~**In-game wardrobe**: lock unowned items.~~ Done (task 28): unowned items are locked with their price and can be bought in game.
 
 ## Manual checks in the desktop app
@@ -68,6 +68,6 @@ The audit of 2026-10-09 listed 54 things in the launcher that were fake, hardcod
 11. Stop the game from Home and from the tray. Crash it (e.g. a broken mod): the crash card's Crash report, Full log and Share logs buttons work.
 12. App menu: Share logs gives two mclo.gs links without your access token in them; Licenses lists the packages.
 13. Content on CurseForge (with a key): search, open a project page, install a mod with dependencies, install a modpack.
-14. With the backend running: two accounts (offline accounts work with `AETHER_ALLOW_OFFLINE=1`) add each other, chat, see each other's status; when one is on a server in game, the other's Join button launches into it.
+14. With the backend running: two accounts (offline accounts work with `KITE_ALLOW_OFFLINE=1`) add each other, chat, see each other's status; when one is on a server in game, the other's Join button launches into it.
 15. Store: buy an epic item with admin-granted coins, equip it, see it in game; the transaction shows in the coin history.
 16. Shared Minecraft settings: change the FOV and a keybind in one profile, quit, launch another (e.g. an imported modpack): same FOV and keybind, its own resource packs. Turn "Same settings in every profile" off for one profile and its changes stay local.

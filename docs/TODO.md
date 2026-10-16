@@ -19,7 +19,7 @@ Game ui changes:
 - then we have the logo in the middle with the singleplayer and multiplayer buttons, and a store button with a different color and an add bellow it
 - in the bottom right corner we can put the recent annoucements with a nice sliding slides so only one is visible at the time but multiple are auto swiping from left to right and a small semi transparent text saying that we are nto affiliated with mojang or microsoft. Do not distribute!
 - in the bottom in the middle we can put the client options that open general settings of the client, wardrobe for cosmetics, chat for social interactions in the client, settings for minecraft settings, relms, and a mod menu form the mod mod menu that is optional if not installed
-- in the bottom left corner we can put the client version as a nice semi transparent text like Aether Client 1.21.11 (v0.1.0-2651) or whatever the version and optionaly build is.
+- in the bottom left corner we can put the client version as a nice semi transparent text like Kite Client 1.21.11 (v0.1.0-2651) or whatever the version and optionaly build is.
 
 2. In game Right Shift Menu
 

@@ -1,8 +1,8 @@
-# Aether
+# Kite
 
-Aether is a personal project exploring a custom Minecraft launcher and client. The goal is to bring game installation and launching, mod and profile management, and client-side features together in one desktop application.
+Kite is a personal project exploring a custom Minecraft launcher and client. The goal is to bring game installation and launching, mod and profile management, and client-side features together in one desktop application.
 
-> **Status:** Aether is in very early development. Features and architecture are changing, and it is not ready for general use.
+> **Status:** Kite is in very early development. Features and architecture are changing, and it is not ready for general use.
 
 ## Project Areas
 
@@ -27,4 +27,4 @@ Run these from the repository root or the indicated directory:
 
 - The Minecraft version matrix is in [tooling/versions.toml](tooling/versions.toml).
 - Brand tokens are in [brand/tokens.json](brand/tokens.json).
-- Aether is not an official Minecraft product and is not affiliated with Mojang or Microsoft.
+- Kite is not an official Minecraft product and is not affiliated with Mojang or Microsoft.

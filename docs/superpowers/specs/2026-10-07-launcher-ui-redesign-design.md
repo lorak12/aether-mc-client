@@ -6,7 +6,7 @@ Scope: `launcher/ui` (React + Vite, rendered in Tauri). UI redesign only.
 
 ## 1. Goal and scope
 
-Rebuild the Aether launcher UI around a persistent app shell (top bar, left sidebar, optional right sidebar) and seven pages plus a currency shop. This pass is **UI-first**:
+Rebuild the Kite launcher UI around a persistent app shell (top bar, left sidebar, optional right sidebar) and seven pages plus a currency shop. This pass is **UI-first**:
 
 - Everything the existing Rust backend already supports stays wired to it: profiles, Modrinth search/install/update, dependency resolution, `.mrpack` import, login, launch progress, and the crash log tail.
 - Everything without a backend runs on **typed mock data behind the `api` layer**: coins, store, friends, DMs, news, servers, notifications from purchases, multi-account, CurseForge, and the live log stream. Mocks share the real call shapes, so swapping in a backend later only changes `api.ts`.
@@ -60,7 +60,7 @@ The current files (`App.tsx`, `pages/*.tsx`, `styles.css`) are migrated into thi
   - `installTargetProfileId` (persisted)
   - `contentProvider` (persisted)
   - `dismissedBanners` (persisted)
-- Persisted UI preferences live in `localStorage` under the `aether.ui.*` keys.
+- Persisted UI preferences live in `localStorage` under the `kite.ui.*` keys.
 
 ### 2.4 Data layer
 - `api/index.ts` exports one `api` object.
@@ -83,7 +83,7 @@ The current files (`App.tsx`, `pages/*.tsx`, `styles.css`) are migrated into thi
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────┐
-│ [logo] Aether [▾ menu]  [←][→]      (drag region)     [◎ 1,250][⌕][🔔][👤 Steve ●▾][▤][–□×] │  top bar
+│ [logo] Kite [▾ menu]  [←][→]      (drag region)     [◎ 1,250][⌕][🔔][👤 Steve ●▾][▤][–□×] │  top bar
 ├──────────┬───────────────────────────────────────────────────────────┬───────────────────┤
 │ ⌂ Home   │                                                           │ Friends           │
 │ ▤ Profiles│                    page content                          │ (on Home, Social) │
@@ -101,9 +101,9 @@ The current files (`App.tsx`, `pages/*.tsx`, `styles.css`) are migrated into thi
 ### 3.1 Top bar (every screen, 48px, drag region except interactive items)
 
 **Left side**
-1. **Client icon and name.** "Aether" in display type.
+1. **Client icon and name.** "Kite" in display type.
 2. **App menu.** A visible chevron button that opens a menu:
-   - About Aether: modal with the version, build and credits.
+   - About Kite: modal with the version, build and credits.
    - Check for Updates: *visual only*, fake spinner, then "You're up to date".
    - Licenses: *visual only*, modal with a static list.
    - Open application folder
@@ -120,7 +120,7 @@ The current files (`App.tsx`, `pages/*.tsx`, `styles.css`) are migrated into thi
 2. **Search button.** Also opens with `Ctrl+K`. It opens the search overlay (§3.4).
 3. **Notifications bell.** Shows an unread badge and opens the notification center (§3.5).
 4. **Account chip.**
-   - Shows a 2D skin head with a small Aether logo badge in the corner, the username, and a status dot (online/away/busy/invisible).
+   - Shows a 2D skin head with a small Kite logo badge in the corner, the username, and a status dot (online/away/busy/invisible).
    - Its dropdown lists all accounts with heads. Clicking one switches to it.
    - The dropdown also has "Add Microsoft account", "Add offline account", a status picker, "Sign out" for the active account, and "Manage accounts" (a Settings deep link).
    - Skin heads come from a public avatar service URL (`https://mc-heads.net/avatar/<uuid>/32`). Offline accounts fall back to a generated Steve/Alex head.
@@ -136,11 +136,11 @@ The current files (`App.tsx`, `pages/*.tsx`, `styles.css`) are migrated into thi
 ### 3.3 Right sidebar (Home and Social only)
 - **Friends**:
   - A header with an online count and an add-friend button.
-  - Online friends first, each with a head, name, status, and the activity line "Playing Aether 1.21 on Hypixel". Offline friends sit below in a collapsed group.
+  - Online friends first, each with a head, name, status, and the activity line "Playing Kite 1.21 on Hypixel". Offline friends sit below in a collapsed group.
   - Hovering a friend reveals Message and Join buttons.
   - **Empty states:** "No friends yet — add someone by username" with a button, and "Nobody's online right now".
   - On Social, clicking a friend opens their DM thread.
-- **Ad slot** (Home only): a fixed-height card at the bottom with an empty state showing the semi-transparent Aether logo and "Your ad here" in muted text.
+- **Ad slot** (Home only): a fixed-height card at the bottom with an empty state showing the semi-transparent Kite logo and "Your ad here" in muted text.
 - About 280px wide. Collapses to a drawer below a 1280px window width (§2.7).
 
 ### 3.4 Search overlay (`Ctrl+K` or the search button)
@@ -205,11 +205,11 @@ Layout from top to bottom:
 1. **Banner** (§3.7), if any undismissed banner exists.
 2. **Greeting row**, spanning the full width with items on both ends:
    - Left: "Welcome back, **{name} ▾**". The name opens the same account switcher as the top bar.
-   - Right: "● **12,483** players online", the total Aether users online, from `api.onlineCount()` (mock).
+   - Right: "● **12,483** players online", the total Kite users online, from `api.onlineCount()` (mock).
 3. **Launch area**, centred over the existing `Scene` backdrop:
    - A large **Launch Game** button.
    - Below it, the active profile label:
-     - Client profile: `Aether <version> with <Loader>`, e.g. "Aether 1.21.4 with Fabric". With the Vanilla loader option it reads "Aether 1.21.4".
+     - Client profile: `Kite <version> with <Loader>`, e.g. "Kite 1.21.4 with Fabric". With the Vanilla loader option it reads "Kite 1.21.4".
      - Modpack profile: `<modpack name> <game version>`.
    - A small "change" link opens a quick profile picker.
    - The existing launch states stay: preparing shows a progress bar and stage label, running shows a "Running" state with a stop option once a backend supports it, and crashed shows a crash card with a log tail and a View log button.
@@ -234,10 +234,10 @@ The right sidebar (§3.3) shows friends and the ad slot.
 
 Clicking the cover or name opens the **profile SidePanel**:
 - The background/cover image at the top, then the name, version and description.
-- **Version chooser.** Profiles are grouped by major version. "Aether 1.21" offers 1.21, 1.21.1, 1.21.3, 1.21.4, 1.21.5, and so on, all from one card. The list of supported minors comes from `api.versionGroups()` (mock, mapping each major to its minors).
+- **Version chooser.** Profiles are grouped by major version. "Kite 1.21" offers 1.21, 1.21.1, 1.21.3, 1.21.4, 1.21.5, and so on, all from one card. The list of supported minors comes from `api.versionGroups()` (mock, mapping each major to its minors).
   > **Data change:** `Profile.mc_version` keeps the exact version the user picked. A new optional `version_group` field (e.g. "1.21") ties the card to its group. For now the UI derives the group from `mc_version` when the field is absent.
 - **Loader chooser:** Vanilla, Fabric, Quilt, Forge or NeoForge.
-  - On a client profile, *Vanilla* means only Aether's built-in mods load, and no third-party mods from the profile's `mods/` folder.
+  - On a client profile, *Vanilla* means only Kite's built-in mods load, and no third-party mods from the profile's `mods/` folder.
   - The panel shows this as a one-line hint under the chooser.
   - Wiring the behaviour in the launch path is a backend task. The UI stores the choice in `Profile.loader`.
 - **Settings** button (opens the popover below) and a primary **Launch** button.
@@ -402,7 +402,7 @@ Anything beyond these is listed as a follow-up backend task.
 What was built differs from the sections above in these places:
 - **More is real than planned.** Small IPC additions made these use the real launcher instead of mocks: multi-account (`list_accounts`, `switch_account`, `remove_account` over an `accounts.json` registry), Modrinth filters and sort (`search_projects`), project pages (`project_details`, `project_versions`), installing a chosen version with or without dependencies (`install_plan`, `install_content` with `version_id`/`with_deps`), per-item updates (`update_content`), modpack to profile (`install_modpack`), and real live logs (`read_game_log` tails `<profile>/logs/launcher-output.log`). Profile version and loader can now be changed (`update_profile`).
 - **Overrides that apply today:** memory, JVM arguments and garbage collector are written to the profile's `memory_mb`/`jvm_args` before each launch. Game directory, resolution, launch hooks and environment variables are saved and labelled "applied at launch in a later update". Profiles created before the redesign keep their own memory/JVM args as overrides.
-- **"Vanilla" on client profiles** is stored as `builtinOnly` in the UI-side profile data, and the real loader stays Fabric/Quilt so Aether still loads. Skipping third-party mods at launch is a backend follow-up.
+- **"Vanilla" on client profiles** is stored as `builtinOnly` in the UI-side profile data, and the real loader stays Fabric/Quilt so Kite still loads. Skipping third-party mods at launch is a backend follow-up.
 - **Settings > General** has launch behaviour and "show friends on Home". Language and start-on-boot were left out until they do something.
 - **Insights** shows real data (downloads, followers, versions, first published, releases per month from the version history) instead of downloads-over-time, which Modrinth doesn't expose.
 - **Disabled content** is a UI flag. The launcher doesn't skip those files yet, and the profile settings say so.

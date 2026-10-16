@@ -4,7 +4,7 @@ This guide covers making a cosmetic (hat, wings, ears, face item, boots, backpac
 with the importer, placing it on the player, and publishing it to the store with a price.
 
 **Who can import:** admins only. The admin list is `backend/src/admins.ts` (currently `nakii14`); more names can be
-added with the backend setting `AETHER_ADMINS=name1,name2`. Admins also have unlimited coins. You need to be signed in
+added with the backend setting `KITE_ADMINS=name1,name2`. Admins also have unlimited coins. You need to be signed in
 through the Kite launcher with the backend running: that's how the game knows you're an admin, and publishing goes
 through it.
 
