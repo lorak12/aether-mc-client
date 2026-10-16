@@ -22,9 +22,9 @@ Launcher and client in one product: a full launcher (Modrinth and CurseForge con
 - Social and store features (friends, chat, presence, coins, cosmetics) go through a backend service. Payments go through Tebex.
 
 ## Capabilities and Constraints
-- Shipping: launcher profiles, Modrinth and CurseForge search/install/update with dependency resolution, Forge/NeoForge install, launch on Fabric/Quilt 1.21.11, 26.2 and 26.3, shared Minecraft options, crash reports, log sharing, tray icon, update check.
+- Shipping: launcher profiles, Modrinth and CurseForge search/install/update with dependency resolution, Forge/NeoForge install and launch, shared Minecraft options, crash reports, log sharing, tray icon, update check, and the Kite client on Fabric/Quilt for the 33 releases from 1.7.10 to 26.3.
 - Shipping in-game: main menu replacement, Right Shift hub, mod window (56 mods), typed settings controls, colour picker with chroma, HUD editor, wardrobe.
-- Not built yet: Forge/NeoForge launch (installers must be run), adapters for 1.8.9 / 1.12.2 / 1.7.10 / 26.1, CI, release signing, Emotes, chat and store in-game (currently "coming soon" panels with preview data), cosmetics not verified in-game.
+- Not built yet: the Kite client on Forge/NeoForge, release signing, a deployed backend, Emotes, a real in-game chat (the Chat button opens a "coming soon" panel), and in-game checks for most of the 33 releases. Cosmetics are not yet verified in game.
 - Stack: Rust/Tauri with React + Vite for the launcher UI; TypeScript backend on Node 22.5+ with SQLite; Java 8-compatible runtime built with Gradle.
 - Terminology: "profile" is one mod and settings set; "adapter" is a version-specific Fabric build of the shared runtime; "coins" are the in-game currency.
 - Undecided: whether the core client stays free and only cosmetics are paid. The repo does not settle this.
@@ -35,8 +35,8 @@ Launcher and client in one product: a full launcher (Modrinth and CurseForge con
 - The in-game badge (the Kite mark on 1.21.11+, a ◆ on older versions) marks client users. Its meaning is not settled beyond that.
 
 ## Evidence on Hand
-- Working launcher and client in the repo: `docs/STATUS.md` lists what is built and tested, `docs/LAUNCHER_TODO.md` holds the remaining in-app checklist.
-- Verified in-game on Fabric 1.21.11 and 26.3 (`runAutotest`, 2026-09-29), with 26.3 also checked alongside Sodium, Iris, Lithium, ImmediatelyFast, Xaero's maps and EMF/ETF.
+- Working launcher and client in the repo: `docs/STATUS.md` lists what is built and tested, `docs/LAUNCHER_CHECKLIST.md` holds the audit log and the in-app checklist.
+- Verified in-game on Fabric 1.21.11 and 26.3 (`runAutotest`, 2026-09-29), with 26.3 also checked alongside Sodium, Iris, Lithium, ImmediatelyFast, Xaero's maps and EMF/ETF. The 26.1 family, 1.19.3 and 1.19.4 passed `runAutotest` on 2026-10-15.
 - No testimonials, customer counts, benchmarks, press or pricing exist. Do not invent them.
 - Design specs: `docs/superpowers/specs/2026-10-07-launcher-ui-redesign-design.md` (launcher) and `docs/superpowers/specs/2026-10-08-ingame-ui-overhaul-design.md` (in-game).
 

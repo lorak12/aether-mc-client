@@ -1,4 +1,4 @@
-# Launcher: audit follow-up
+# Launcher audit and manual checks
 
 The audit of 2026-10-09 listed 54 things in the launcher that were fake, hardcoded or missing. All of them are now built or removed. Setup (keys, backend env) is in [STATUS.md](STATUS.md).
 
